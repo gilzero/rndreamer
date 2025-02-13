@@ -1,3 +1,5 @@
+// @file-overview: chat screen for the app
+// @file-path: app/src/screens/chat.tsx
 import React, { useEffect } from 'react'
 import {
   View,
@@ -9,48 +11,32 @@ import {
   ScrollView,
   ActivityIndicator,
   FlatList,
-  Keyboard
+  Keyboard,
+  Animated,
+  Easing
 } from 'react-native'
 import 'react-native-get-random-values'
 import { useContext, useState, useRef } from 'react'
 import { ThemeContext, AppContext } from '../context'
-import { getEventSource, getFirstN, getFirstNCharsOrLess, getChatType } from '../utils'
 import { v4 as uuid } from 'uuid'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import {
-  IOpenAIMessages,
-  IOpenAIStateWithIndex
-} from '../../types'
+import { ChatMessage, ChatState, ModelProvider } from '../../types'
 import * as Clipboard from 'expo-clipboard'
 import { useActionSheet } from '@expo/react-native-action-sheet'
 import Markdown from '@ronradtke/react-native-markdown-display'
+import { chatService } from '../services/chatService'
 
 export function Chat() {
   const [loading, setLoading] = useState<boolean>(false)
   const [input, setInput] = useState<string>('')
+  const [chatState, setChatState] = useState<ChatState>({
+    messages: [],
+    index: uuid()
+  })
   const scrollViewRef = useRef<ScrollView | null>(null)
   const { showActionSheetWithOptions } = useActionSheet()
-
-  // claude state management
-  const [claudeAPIMessages, setClaudeAPIMessages] = useState('')
-  const [claudeResponse, setClaudeResponse] = useState({
-    messages: [],
-    index: uuid(),
-  })
-
-  // openAI state management
-  const [openaiMessages, setOpenaiMessages] = useState<IOpenAIMessages[]>([])
-  const [openaiResponse, setOpenaiResponse] = useState<IOpenAIStateWithIndex>({
-    messages: [],
-    index: uuid()
-  })
-
-  // Gemini state management
-  const [geminiAPIMessages, setGeminiAPIMessages] = useState('')
-  const [geminiResponse, setGeminiResponse] = useState({
-    messages: [],
-    index: uuid()
-  })
+  const buttonScale = useRef(new Animated.Value(1)).current
+  const sendButtonScale = useRef(new Animated.Value(1)).current
 
   const { theme } = useContext(ThemeContext)
   const { chatType, clearChatRef } = useContext(AppContext)
@@ -60,288 +46,142 @@ export function Chat() {
     if (clearChatRef) {
       clearChatRef.current = handleClearChat
     }
+    return () => {
+      if (clearChatRef) {
+        clearChatRef.current = undefined
+      }
+    }
   }, [])
 
   function handleClearChat() {
     if (loading) return
-    if (chatType.label.includes('claude')) {
-      setClaudeResponse({
-        messages: [],
-        index: uuid()
-      })
-      setClaudeAPIMessages('')
-    } else if (chatType.label.includes('gemini')) {
-      setGeminiResponse({
-        messages: [],
-        index: uuid()
-      })
-      setGeminiAPIMessages('')
-    } else {
-      setOpenaiResponse({
-        messages: [],
-        index: uuid()
-      })
-      setOpenaiMessages([])
-    }
+    setChatState({
+      messages: [],
+      index: uuid()
+    })
     setInput('')
+  }
+
+  const animateButton = (scale: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.95,
+        duration: 100,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start()
   }
 
   async function chat() {
-    if (!input) return
+    if (!input.trim()) return
+    animateButton(sendButtonScale)
     Keyboard.dismiss()
-    if (chatType.label.includes('claude')) {
-      generateClaudeResponse()
-    } else if (chatType.label.includes('gemini')) {
-      generateGeminiResponse()
-    } else {
-      generateOpenaiResponse()
+
+    const newMessage: ChatMessage = {
+      role: 'user',
+      content: input,
+      timestamp: Date.now()
     }
-  }
 
-  async function generateGeminiResponse() {
-    if (!input) return
-    Keyboard.dismiss()
-    let localResponse = ''
-    const geminiInput = `${input}`
-
-    let geminiArray = [
-      ...geminiResponse.messages, {
-        user: input,
-      }
-    ] as [{user: string, assistant?: string}]
-
-    setGeminiResponse(c => ({
-      index: c.index,
-      messages: JSON.parse(JSON.stringify(geminiArray))
+    setChatState(prev => ({
+      ...prev,
+      messages: [...prev.messages, newMessage]
     }))
 
     setLoading(true)
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({
-        animated: true
-      })
-    }, 1)
     setInput('')
 
-    const eventSourceArgs = {
-      body: {
-        prompt: geminiInput,
-        model: chatType.label
-      },
-      type: getChatType(chatType)
-    }
-
-    const es = await getEventSource(eventSourceArgs)
-
-   
-    const listener = (event) => {
-      if (event.type === "open") {
-        console.log("Open SSE connection.")
-        setLoading(false)
-      } else if (event.type === "message") {
-        if (event.data !== "[DONE]") {
-          if (localResponse.length < 850) {
-            scrollViewRef.current?.scrollToEnd({
-              animated: true
-            })
-          }
-        
-          const data = event.data
-          localResponse = localResponse + JSON.parse(data)
-          geminiArray[geminiArray.length - 1].assistant = localResponse
-          setGeminiResponse(c => ({
-            index: c.index,
-            messages: JSON.parse(JSON.stringify(geminiArray))
-          }))
-        } else {
-          setLoading(false)
-          setGeminiAPIMessages(
-            `${geminiAPIMessages}\n\nPrompt: ${input}\n\nResponse:${localResponse}`
-          )
-          es.close()
-        }
-      } else if (event.type === "error") {
-        console.error("Connection error:", event.message)
-        setLoading(false)
-      } else if (event.type === "exception") {
-        console.error("Error:", event.message, event.error)
-        setLoading(false)
-      }
-    }
-   
-    es.addEventListener("open", listener);
-    es.addEventListener("message", listener);
-    es.addEventListener("error", listener);
-  }
-
-  async function generateClaudeResponse() {
-    if (!input) return
-    Keyboard.dismiss()
     let localResponse = ''
-    const claudeInput = `${claudeAPIMessages}\n\nHuman: ${input}\n\nAssistant:`
 
-    let claudeArray = [
-      ...claudeResponse.messages, {
-        user: input,
-      }
-    ] as [{user: string, assistant?: string}]
-
-    setClaudeResponse(c => ({
-      index: c.index,
-      messages: JSON.parse(JSON.stringify(claudeArray))
-    }))
-
-    setLoading(true)
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({
-        animated: true
-      })
-    }, 1)
-    setInput('')
-
-    const eventSourceArgs = {
-      body: {
-        prompt: claudeInput,
-        model: chatType.label
-      },
-      type: getChatType(chatType),
-    }
-
-    const es = await getEventSource(eventSourceArgs)
-
-    const listener = (event) => {
-      if (event.type === "open") {
-        console.log("Open SSE connection.")
-        setLoading(false)
-      } else if (event.type === "message") {
-        if (event.data !== "[DONE]") {
-          if (localResponse.length < 850) {
-            scrollViewRef.current?.scrollToEnd({
-              animated: true
-            })
-          }
-          const data = event.data
-          localResponse = localResponse + JSON.parse(data).text
-          claudeArray[claudeArray.length - 1].assistant = localResponse
-          setClaudeResponse(c => ({
-            index: c.index,
-            messages: JSON.parse(JSON.stringify(claudeArray))
-          }))
-        } else {
-          setLoading(false)
-          setClaudeAPIMessages(
-            `${claudeAPIMessages}\n\nHuman: ${input}\n\nAssistant:${getFirstNCharsOrLess(localResponse, 2000)}`
-          )
-          es.close()
-        }
-      } else if (event.type === "error") {
-        console.error("Connection error:", event.message)
-        setLoading(false)
-      } else if (event.type === "exception") {
-        console.error("Error:", event.message, event.error)
-        setLoading(false)
-      }
-    }
-    es.addEventListener("open", listener)
-    es.addEventListener("message", listener)
-    es.addEventListener("error", listener)
-  }
-
-  async function generateOpenaiResponse() {
     try {
-      setLoading(true)
-      // set message state for openai to have context on previous conversations
-      let messagesRequest = getFirstN({ messages: openaiMessages })
-      if (openaiResponse.messages.length) {
-        messagesRequest = [
-          ...messagesRequest,
-          {
-            role: 'assistant',
-            content: getFirstNCharsOrLess(
-              openaiResponse.messages[openaiResponse.messages.length -1].assistant
-            )
-          }
-        ]
-      }
-      messagesRequest = [...messagesRequest, {role: 'user', content: input}]
-      setOpenaiMessages(messagesRequest)
-
-      // set local openai state to dislay user's most recent question
-      let openaiArray = [
-        ...openaiResponse.messages,
+      await chatService.streamChat(
+        [...chatState.messages, newMessage],
         {
-          user: input,
-          assistant: ''
-        }
-      ]
-      setOpenaiResponse(c => ({
-        index: c.index,
-        messages: JSON.parse(JSON.stringify(openaiArray))
-      }))
-
-      let localResponse = ''
-      const eventSourceArgs = {
-        body: {
-          messages: messagesRequest,
-          model: chatType.label
+          provider: chatType.label,
+          model: chatType.name,
+          streaming: true
         },
-        type: getChatType(chatType)
-      }
-      setInput('')
-      const eventSource = getEventSource(eventSourceArgs)
-
-      console.log('about to open listener...')
-      const listener = (event:any) => {
-        if (event.type === "open") {
-          console.log("Open SSE connection.")
-          setLoading(false)
-        } else if (event.type === 'message') {
-          if (event.data !== "[DONE]") {
-            if (localResponse.length < 850) {
-              scrollViewRef.current?.scrollToEnd({
-                animated: true
-              })
-            }
-            // if (!JSON.parse(event.data).content) return
-            localResponse = localResponse + JSON.parse(event.data).content
-            openaiArray[openaiArray.length - 1].assistant = localResponse
-            setOpenaiResponse(c => ({
-              index: c.index,
-              messages: JSON.parse(JSON.stringify(openaiArray))
+        {
+          onToken: (token) => {
+            localResponse += token
+            setChatState(prev => ({
+              ...prev,
+              messages: [
+                ...prev.messages,
+                {
+                  role: 'assistant',
+                  content: localResponse,
+                  timestamp: Date.now()
+                }
+              ]
             }))
-          } else {
+            if (localResponse.length < 850) {
+              scrollViewRef.current?.scrollToEnd({ animated: true })
+            }
+          },
+          onError: (error) => {
+            console.error('Chat error:', error)
             setLoading(false)
-            eventSource.close()
+          },
+          onComplete: () => {
+            setLoading(false)
           }
-        } else if (event.type === "error") {
-          console.error("Connection error:", event.message)
-          setLoading(false)
-          eventSource.close()
-        } else if (event.type === "exception") {
-          console.error("Error:", event.message, event.error)
-          setLoading(false)
-          eventSource.close()
         }
-      }
-      eventSource.addEventListener("open", listener)
-      eventSource.addEventListener("message", listener)
-      eventSource.addEventListener("error", listener)
-    } catch (err) {
-      console.log('error in generateOpenaiResponse: ', err)
+      )
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      setLoading(false)
     }
   }
 
-  async function copyToClipboard(text) {
+  function renderItem({ item }: { item: ChatMessage }) {
+    return (
+      <Animated.View style={[styles.promptResponse]}>
+        {item.role === 'user' ? (
+          <View style={styles.promptTextContainer}>
+            <View style={styles.promptTextWrapper}>
+              <Text style={styles.promptText}>{item.content}</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.textStyleContainer}>
+            <Markdown style={styles.markdownStyle as any}>{item.content}</Markdown>
+            <TouchableHighlight
+              onPress={() => showClipboardActionsheet(item.content)}
+              underlayColor={'transparent'}
+            >
+              <View style={styles.optionsIconWrapper}>
+                <Ionicons
+                  name="apps"
+                  size={20}
+                  color={theme.textColor + '90'}
+                />
+              </View>
+            </TouchableHighlight>
+          </View>
+        )}
+      </Animated.View>
+    )
+  }
+
+  async function copyToClipboard(text: string) {
     await Clipboard.setStringAsync(text)
   }
 
-  async function showClipboardActionsheet(text) {
+  async function showClipboardActionsheet(text: string) {
     const cancelButtonIndex = 2
     showActionSheetWithOptions({
       options: ['Copy to clipboard', 'Clear chat', 'cancel'],
       cancelButtonIndex
     }, selectedIndex => {
-      if (selectedIndex === Number(0)) {
+      if (selectedIndex === 0) {
         copyToClipboard(text)
       }
       if (selectedIndex === 1) {
@@ -350,54 +190,7 @@ export function Chat() {
     })
   }
 
-  function renderItem({
-    item, index
-  } : {
-    item: any, index: number
-  }) {
-    return (
-      <View style={styles.promptResponse} key={index}>
-        <View style={styles.promptTextContainer}>
-          <View style={styles.promptTextWrapper}>
-            <Text style={styles.promptText}>
-              {item.user}
-            </Text>
-          </View>
-        </View>
-      {
-        item.assistant && (
-          <View style={styles.textStyleContainer}>
-            <Markdown
-              style={styles.markdownStyle as any}
-            >{item.assistant}</Markdown>
-            <TouchableHighlight
-              onPress={() => showClipboardActionsheet(item.assistant)}
-              underlayColor={'transparent'}
-            >
-              <View style={styles.optionsIconWrapper}>
-                <Ionicons
-                  name="apps"
-                  size={20}
-                  color={theme.textColor}
-                />
-              </View>
-            </TouchableHighlight>
-          </View>
-        )
-      }
-      </View>
-    )
-  }
-
-  const callMade = (() => {
-    if (chatType.label.includes('claude')) {
-      return claudeResponse.messages.length > 0
-    }
-    if (chatType.label.includes('gemini')) {
-      return geminiResponse.messages.length > 0
-    }
-    return openaiResponse.messages.length > 0
-  })()
+  const callMade = chatState.messages.length > 0
 
   return (
     <KeyboardAvoidingView
@@ -408,180 +201,174 @@ export function Chat() {
       <ScrollView
         keyboardShouldPersistTaps='handled'
         ref={scrollViewRef}
-        contentContainerStyle={!callMade && styles.scrollContentContainer}
+        contentContainerStyle={[
+          !callMade && styles.scrollContentContainer,
+          { paddingBottom: 20 }
+        ]}
       >
-        {
-          !callMade && (
-            <View style={styles.midChatInputWrapper}>
-              <View style={styles.midChatInputContainer}>
-                
-                <TextInput
-                  onChangeText={v => setInput(v)}
-                  style={styles.midInput}
-                  placeholder='Message'
-                  placeholderTextColor={theme.placeholderTextColor}
-                  autoCorrect={true}
-                />
-                <TouchableHighlight
-                  onPress={chat}
-                  underlayColor={theme.tintColor + '80'}
-                  style={styles.midButtonContainer}
-                >
-                  <View style={styles.midButtonStyle}>
-                    <Ionicons
-                      name="chatbox-ellipses-outline"
-                      size={22}
-                      color={theme.tintTextColor}
-                      style={styles.midButtonIcon}
-                    />
-                    <Text style={styles.midButtonText}>
-                      Start {chatType.name} Chat
-                    </Text>
-                  </View>
-                </TouchableHighlight>
-                <Text style={styles.chatDescription}>
-                  It's time to prompt...
-                </Text>
-              </View>
-            </View>
-          )
-        }
-        {
-          callMade && (
-            <>
-            {
-              chatType.label.includes('gpt') && (
-                <FlatList
-                  data={openaiResponse.messages}
-                  renderItem={renderItem}
-                  scrollEnabled={false}
-                />
-              )
-            }
-            {
-              chatType.label.includes('claude') && (
-                <FlatList
-                  data={claudeResponse.messages}
-                  renderItem={renderItem}
-                  scrollEnabled={false}
-                />
-              )
-            }
-            {
-              chatType.label.includes('gemini') && (
-                <FlatList
-                  data={geminiResponse.messages}
-                  renderItem={renderItem}
-                  scrollEnabled={false}
-                />
-              )
-            }
-            </>
-          )
-        }
-        {
-          loading && (
-            <ActivityIndicator style={styles.loadingContainer} />
-          )
-        }
-      </ScrollView>
-      {
-        callMade && (
-          <View
-              style={styles.chatInputContainer}
-            >
-            <TextInput
-              style={styles.input}
-              onChangeText={v => setInput(v)}
-              placeholder='Message'
-              placeholderTextColor={theme.placeholderTextColor}
-              value={input}
-            />
-            <TouchableHighlight
-              underlayColor={'transparent'}
-              activeOpacity={0.65}
-              onPress={chat}
-            >
-              <View
-                style={styles.chatButton}
+        {!callMade ? (
+          <View style={styles.midChatInputWrapper}>
+            <View style={styles.midChatInputContainer}>
+              <TextInput
+                onChangeText={setInput}
+                style={styles.midInput}
+                placeholder='Message'
+                placeholderTextColor={theme.placeholderTextColor + '80'}
+                autoCorrect={true}
+              />
+              <TouchableHighlight
+                onPress={() => {
+                  animateButton(buttonScale)
+                  chat()
+                }}
+                underlayColor={theme.tintColor + '90'}
+                style={styles.midButtonContainer}
               >
-                <Ionicons
-                  name="arrow-up-outline"
-                  size={20} color={theme.tintTextColor}
-                />
-              </View>
-            </TouchableHighlight>
+                <Animated.View 
+                  style={[
+                    styles.midButtonStyle,
+                    {
+                      transform: [{ scale: buttonScale }]
+                    }
+                  ]}
+                >
+                  <Ionicons
+                    name="chatbox-ellipses-outline"
+                    size={22}
+                    color={theme.tintTextColor}
+                    style={styles.midButtonIcon}
+                  />
+                  <Text style={styles.midButtonText}>
+                    Start {chatType.name} Chat
+                  </Text>
+                </Animated.View>
+              </TouchableHighlight>
+              <Text style={styles.chatDescription}>
+                It's time to prompt...
+              </Text>
+            </View>
           </View>
-        )
-      }
+        ) : (
+          <FlatList
+            data={chatState.messages}
+            renderItem={renderItem}
+            scrollEnabled={false}
+            keyExtractor={(_, index) => `${chatType.label}-${index}`}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+          />
+        )}
+        {loading && <ActivityIndicator style={styles.loadingContainer} />}
+      </ScrollView>
+      {callMade && (
+        <View style={styles.chatInputContainer}>
+          <TextInput
+            style={styles.input}
+            onChangeText={setInput}
+            placeholder='Message'
+            placeholderTextColor={theme.placeholderTextColor + '80'}
+            value={input}
+          />
+          <TouchableHighlight
+            underlayColor={'transparent'}
+            activeOpacity={0.65}
+            onPress={() => {
+              animateButton(sendButtonScale)
+              chat()
+            }}
+          >
+            <Animated.View
+              style={[
+                styles.chatButton,
+                {
+                  transform: [{ scale: sendButtonScale }]
+                }
+              ]}
+            >
+              <Ionicons
+                name="arrow-up-outline"
+                size={20}
+                color={theme.tintTextColor}
+              />
+            </Animated.View>
+          </TouchableHighlight>
+        </View>
+      )}
     </KeyboardAvoidingView>
   )
 }
 
 const getStyles = (theme: any) => StyleSheet.create({
   optionsIconWrapper: {
-    padding: 10,
-    paddingTop: 9,
-    alignItems: 'flex-end'
+    padding: 12,
+    paddingTop: 10,
+    alignItems: 'flex-end',
+    opacity: 0.8
   },
   scrollContentContainer: {
     flex: 1,
+    paddingTop: 20
   },
   chatDescription: {
-    color: theme.textColor + '80',
+    color: theme.textColor + '60',
     textAlign: 'center',
-    marginTop: 24,
-    fontSize: 13,
-    paddingHorizontal: 34,
+    marginTop: 32,
+    fontSize: 15,
+    letterSpacing: 0.4,
+    paddingHorizontal: 40,
     fontFamily: theme.regularFont,
+    lineHeight: 24,
   },
   midInput: {
-    marginBottom: 16,
+    marginBottom: 20,
     borderWidth: 1,
     paddingHorizontal: 25,
-    marginHorizontal: 14,
-    paddingVertical: 15,
-    borderRadius: 16,
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 24,
     color: theme.textColor,
-    borderColor: theme.borderColor,
+    borderColor: theme.borderColor + '30',
     fontFamily: theme.mediumFont,
     backgroundColor: theme.backgroundColor,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 6,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
   },
   midButtonContainer: {
-    marginHorizontal: 14,
-    borderRadius: 16,
+    marginHorizontal: 16,
+    borderRadius: 24,
     backgroundColor: theme.tintColor,
-    shadowColor: '#000',
+    shadowColor: theme.tintColor,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 6,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+    transform: [{ scale: 1.02 }],
   },
   midButtonStyle: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 28,
+    paddingVertical: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   midButtonIcon: {
-    marginRight: 12,
+    marginRight: 14,
   },
   midButtonText: {
     color: theme.tintTextColor,
     fontFamily: theme.boldFont,
-    fontSize: 16,
+    fontSize: 17,
+    letterSpacing: 0.4,
   },
   midChatInputWrapper: {
     flex: 1,
@@ -597,41 +384,69 @@ const getStyles = (theme: any) => StyleSheet.create({
     marginTop: 25
   },
   promptResponse: {
-    marginTop: 10,
+    marginTop: 16,
+    marginBottom: 8,
   },
   textStyleContainer: {
     borderWidth: 1,
     marginRight: 25,
-    borderColor: theme.borderColor,
-    padding: 15,
-    paddingBottom: 6,
-    paddingTop: 5,
+    borderColor: theme.borderColor + '20',
+    padding: 20,
+    paddingBottom: 10,
+    paddingTop: 10,
     margin: 10,
-    borderRadius: 13
+    borderRadius: 20,
+    backgroundColor: theme.backgroundColor,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   promptTextContainer: {
     flex: 1,
     alignItems: 'flex-end',
-    marginRight: 15,
-    marginLeft: 24,
+    marginRight: 16,
+    marginLeft: 28,
   },
   promptTextWrapper: {
-    borderRadius: 8,
-    borderTopRightRadius: 0,
+    borderRadius: 20,
+    borderTopRightRadius: 4,
     backgroundColor: theme.tintColor,
+    shadowColor: theme.tintColor,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   promptText: {
     color: theme.tintTextColor,
-    fontFamily: theme.regularFont,
-    paddingVertical: 5,
-    paddingHorizontal: 9,
-    fontSize: 16
+    fontFamily: theme.mediumFont,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    letterSpacing: 0.3,
   },
   chatButton: {
     marginRight: 14,
-    padding: 5,
+    padding: 14,
     borderRadius: 99,
-    backgroundColor: theme.tintColor
+    backgroundColor: theme.tintColor,
+    shadowColor: theme.tintColor,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 5,
+    transform: [{ scale: 1.05 }],
   },
   chatInputContainer: {
     paddingTop: 5,
@@ -644,14 +459,23 @@ const getStyles = (theme: any) => StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 99,
+    borderRadius: 24,
     color: theme.textColor,
-    marginHorizontal: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 21,
-    paddingRight: 39,
-    borderColor: theme.borderColor,
-    fontFamily: theme.semiBoldFont,
+    marginHorizontal: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    paddingRight: 50,
+    borderColor: theme.borderColor + '30',
+    fontFamily: theme.mediumFont,
+    backgroundColor: theme.backgroundColor,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   container: {
     backgroundColor: theme.backgroundColor,

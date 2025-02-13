@@ -94,7 +94,8 @@ export default function App() {
       >
         <ThemeContext.Provider value={{
           theme: lightTheme,
-          themeName: 'light'
+          themeName: 'light',
+          setTheme: () => null
           }}>
           <ActionSheetProvider>
             <NavigationContainer>

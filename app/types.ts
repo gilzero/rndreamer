@@ -1,13 +1,69 @@
+// @file-overview: types for the app
+// @file-path: app/types.ts
 import { SetStateAction, Dispatch } from 'react'
 
+// Chat Message Types
+export type MessageRole = 'user' | 'assistant' | 'system';
+
+export interface ChatMessage {
+  role: MessageRole;
+  content: string;
+  timestamp?: number;
+}
+
+export interface ChatState {
+  messages: ChatMessage[];
+  index: string;
+}
+
+// Model Types
+export type ModelProvider = 'gpt' | 'claude' | 'gemini';
+
+export interface Model {
+  name: string;
+  label: ModelProvider;
+  icon: React.ComponentType<any>;
+}
+
+// Context Types
+export interface IThemeContext {
+  theme: {
+    textColor: string;
+    backgroundColor: string;
+    tintColor: string;
+    borderColor: string;
+    placeholderTextColor: string;
+    tintTextColor: string;
+    secondaryTextColor: string;
+    secondaryBackgroundColor: string;
+    regularFont: string;
+    mediumFont: string;
+    boldFont: string;
+    semiBoldFont: string;
+    lightFont: string;
+  };
+  themeName: string;
+  setTheme: Dispatch<SetStateAction<any>>;
+}
+
+export interface IAppContext {
+  chatType: Model;
+  setChatType: Dispatch<SetStateAction<Model>>;
+  handlePresentModalPress: () => void;
+  closeModal: () => void;
+  clearChat: () => void;
+  clearChatRef: React.MutableRefObject<(() => void) | undefined>;
+}
+
+// Component Props Types
 export interface IIconProps {
-  type: string
-  props: any
+  type: string;
+  props: Record<string, unknown>;
 }
 
 export interface IOpenAIMessages {
-  role: string
-  content: string
+  role: MessageRole;
+  content: string;
 }
 
 export interface IOpenAIUserHistory {
@@ -17,26 +73,9 @@ export interface IOpenAIUserHistory {
 }
 
 export interface IOpenAIStateWithIndex {
-  index: string
-  messages: IOpenAIUserHistory[]
-}
-
-export interface IThemeContext {
-  theme: any
-  themeName: string
-}
-
-export interface Model {
-  name: string;
-  label: string;
-  icon: any
-}
-
-export interface IAppContext {
-  chatType: Model
-  setChatType: Dispatch<SetStateAction<Model>>
-  handlePresentModalPress: () => void
-  closeModal: () => void
-  clearChat: () => void
-  clearChatRef: React.MutableRefObject<(() => void) | undefined>
+  messages: Array<{
+    user: string;
+    assistant: string;
+  }>;
+  index: string;
 }
