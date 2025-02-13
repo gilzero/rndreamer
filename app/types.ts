@@ -37,4 +37,6 @@ export interface IAppContext {
   setChatType: Dispatch<SetStateAction<Model>>
   handlePresentModalPress: () => void
   closeModal: () => void
+  clearChat: () => void
+  clearChatRef: React.MutableRefObject<(() => void) | undefined>
 }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   View,
   Text,
@@ -45,20 +45,6 @@ export function Chat() {
     index: uuid()
   })
 
-  // cohere state management
-  const [cohereResponse, setCohereResponse] = useState({
-    messages: [],
-    index: uuid()
-  })
-
-  // mistral state management
-  const [mistralAPIMessages, setMistralAPIMessages] = useState('')
-  const [mistralResponse, setMistralResponse] = useState({
-    messages: [],
-    index: uuid()
-  })
-
-
   // Gemini state management
   const [geminiAPIMessages, setGeminiAPIMessages] = useState('')
   const [geminiResponse, setGeminiResponse] = useState({
@@ -67,25 +53,51 @@ export function Chat() {
   })
 
   const { theme } = useContext(ThemeContext)
-  const { chatType } = useContext(AppContext)
+  const { chatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme)
+
+  useEffect(() => {
+    if (clearChatRef) {
+      clearChatRef.current = handleClearChat
+    }
+  }, [])
+
+  function handleClearChat() {
+    if (loading) return
+    if (chatType.label.includes('claude')) {
+      setClaudeResponse({
+        messages: [],
+        index: uuid()
+      })
+      setClaudeAPIMessages('')
+    } else if (chatType.label.includes('gemini')) {
+      setGeminiResponse({
+        messages: [],
+        index: uuid()
+      })
+      setGeminiAPIMessages('')
+    } else {
+      setOpenaiResponse({
+        messages: [],
+        index: uuid()
+      })
+      setOpenaiMessages([])
+    }
+    setInput('')
+  }
 
   async function chat() {
     if (!input) return
     Keyboard.dismiss()
     if (chatType.label.includes('claude')) {
       generateClaudeResponse()
-    } else if (chatType.label.includes('cohere')) {
-      generateCohereResponse()
-    } else if (chatType.label.includes('mistral')) {
-      generateMistralResponse()
     } else if (chatType.label.includes('gemini')) {
       generateGeminiResponse()
-    }
-    else {
+    } else {
       generateOpenaiResponse()
     }
   }
+
   async function generateGeminiResponse() {
     if (!input) return
     Keyboard.dismiss()
@@ -145,81 +157,6 @@ export function Chat() {
           setLoading(false)
           setGeminiAPIMessages(
             `${geminiAPIMessages}\n\nPrompt: ${input}\n\nResponse:${localResponse}`
-          )
-          es.close()
-        }
-      } else if (event.type === "error") {
-        console.error("Connection error:", event.message)
-        setLoading(false)
-      } else if (event.type === "exception") {
-        console.error("Error:", event.message, event.error)
-        setLoading(false)
-      }
-    }
-   
-    es.addEventListener("open", listener);
-    es.addEventListener("message", listener);
-    es.addEventListener("error", listener);
-  }
-
-  async function generateMistralResponse() {
-    if (!input) return
-    Keyboard.dismiss()
-    let localResponse = ''
-    const mistralInput = `${mistralAPIMessages}\n\n Prompt: ${input}`
-
-    let mistralArray = [
-      ...mistralResponse.messages, {
-        user: input,
-      }
-    ] as [{user: string, assistant?: string}]
-
-    setMistralResponse(c => ({
-      index: c.index,
-      messages: JSON.parse(JSON.stringify(mistralArray))
-    }))
-
-    setLoading(true)
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({
-        animated: true
-      })
-    }, 1)
-    setInput('')
-
-    const eventSourceArgs = {
-      body: {
-        prompt: mistralInput,
-        model: chatType.label
-      },
-      type: getChatType(chatType)
-    }
-
-    const es = await getEventSource(eventSourceArgs)
-
-    const listener = (event) => {
-      if (event.type === "open") {
-        console.log("Open SSE connection.")
-        setLoading(false)
-      } else if (event.type === "message") {
-        if (event.data !== "[DONE]") {
-          if (localResponse.length < 850) {
-            scrollViewRef.current?.scrollToEnd({
-              animated: true
-            })
-          }
-          const data = event.data
-          localResponse = localResponse + JSON.parse(data).data
-
-          mistralArray[mistralArray.length - 1].assistant = localResponse
-          setMistralResponse(c => ({
-            index: c.index,
-            messages: JSON.parse(JSON.stringify(mistralArray))
-          }))
-        } else {
-          setLoading(false)
-          setMistralAPIMessages(
-            `${mistralAPIMessages}\n\nPrompt: ${input}\n\nResponse:${getFirstNCharsOrLess(localResponse, 2000)}`
           )
           es.close()
         }
@@ -394,111 +331,6 @@ export function Chat() {
     }
   }
 
-  async function generateCohereResponse() {
-    try {
-      if (!input) return
-      Keyboard.dismiss()
-      let localResponse = ''
-      let requestInput = input
-
-      let cohereArray = [
-        ...cohereResponse.messages,
-        {
-          user: input,
-          assistant: ''
-        }
-      ]
-
-      setCohereResponse(r => ({
-        index: r.index,
-        messages: JSON.parse(JSON.stringify(cohereArray))
-      }))
-
-      setLoading(true)
-      setInput('')
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({
-          animated: true
-        })
-      }, 1)
-
-      const eventSourceArgs = {
-        type: getChatType(chatType),
-        body: {
-          prompt: requestInput,
-          conversationId: cohereResponse.index,
-          model: chatType.label
-        }
-      }
-
-      const es = await getEventSource(eventSourceArgs)
-
-      const listener = (event) => {
-        if (
-          event.data === "[DONE]"
-        ) {
-          console.log('done ....')
-          return es.close()
-        }
-        if (event.type === "open") {
-          setLoading(false)
-        } else if (event.type === 'message') {
-          try {
-            JSON.parse(event.data)
-            if (event.data !== "[DONE]" || !JSON.parse(event.data).is_finished) {
-              if (localResponse.length < 850) {
-                scrollViewRef.current?.scrollToEnd({
-                  animated: true
-                })
-              }
-              if (JSON.parse(event.data).text) {
-                if (!localResponse && JSON.parse(event.data).text === '\n') return
-                if (
-                  !localResponse && 
-                  JSON.parse(event.data).text.charAt(0) === ' '
-                ) {
-                  localResponse = JSON.parse(event.data).text.substring(1)
-                } else {
-                  localResponse = localResponse + JSON.parse(event.data).text
-                }
-                cohereArray[cohereArray.length - 1].assistant = localResponse
-                setCohereResponse(r => ({
-                  index: r.index,
-                  messages: JSON.parse(JSON.stringify(cohereArray))
-                }))
-              }
-              if (JSON.parse(event.data).is_finished) {
-                setLoading(false)
-                es.close()
-              }
-            } else {
-              setLoading(false)
-              es.close()
-            }
-          } catch (err) {
-            console.log('error parsing data ... ', err)
-            setLoading(false)
-            es.close()
-          }
-        } else if (event.type === "error" || event.type === "exception") {
-          console.error("Connection error:", event.message)
-          setLoading(false)
-          es.close()
-        } else {
-          console.error("Connection error:", event.message)
-          setLoading(false)
-          es.close()
-        }
-      }
-     
-      es.addEventListener("open", listener)
-      es.addEventListener("message", listener)
-      es.addEventListener("error", listener)
-    } catch (err) {
-      console.log('error generating cohere chat...', err)
-    }
-  }
-
   async function copyToClipboard(text) {
     await Clipboard.setStringAsync(text)
   }
@@ -513,44 +345,9 @@ export function Chat() {
         copyToClipboard(text)
       }
       if (selectedIndex === 1) {
-        clearChat()
+        handleClearChat()
       }
     })
-  }
-
-  async function clearChat() {
-    if (loading) return
-    if (chatType.label.includes('claude')) {
-      setClaudeResponse({
-        messages: [],
-        index: uuid()
-      })
-      setClaudeAPIMessages('')
-    } else if (chatType.label.includes('cohere')) {
-      setCohereResponse({
-        messages: [],
-        index: uuid()
-      })
-    } else if (chatType.label.includes('mistral')) {
-      setMistralResponse({
-        messages: [],
-        index: uuid()
-      })
-      setMistralAPIMessages('')
-    } else if (chatType.label.includes('gemini')) {
-      setGeminiResponse({
-        messages: [],
-        index: uuid()
-      })
-      setGeminiAPIMessages('')
-    }
-     else {
-      setOpenaiResponse({
-        messages: [],
-        index: uuid()
-      })
-      setOpenaiMessages([])
-    }
   }
 
   function renderItem({
@@ -596,12 +393,6 @@ export function Chat() {
     if (chatType.label.includes('claude')) {
       return claudeResponse.messages.length > 0
     }
-    if (chatType.label.includes('cohere')) {
-      return cohereResponse.messages.length > 0
-    }
-    if (chatType.label.includes('mistral')) {
-      return mistralResponse.messages.length > 0
-    }
     if (chatType.label.includes('gemini')) {
       return geminiResponse.messages.length > 0
     }
@@ -633,12 +424,15 @@ export function Chat() {
                 />
                 <TouchableHighlight
                   onPress={chat}
-                  underlayColor={'transparent'}
+                  underlayColor={theme.tintColor + '80'}
+                  style={styles.midButtonContainer}
                 >
                   <View style={styles.midButtonStyle}>
                     <Ionicons
                       name="chatbox-ellipses-outline"
-                      size={22} color={theme.tintTextColor}
+                      size={22}
+                      color={theme.tintTextColor}
+                      style={styles.midButtonIcon}
                     />
                     <Text style={styles.midButtonText}>
                       Start {chatType.name} Chat
@@ -646,7 +440,7 @@ export function Chat() {
                   </View>
                 </TouchableHighlight>
                 <Text style={styles.chatDescription}>
-                  Chat with a variety of different language models.
+                  It's time to prompt...
                 </Text>
               </View>
             </View>
@@ -668,24 +462,6 @@ export function Chat() {
               chatType.label.includes('claude') && (
                 <FlatList
                   data={claudeResponse.messages}
-                  renderItem={renderItem}
-                  scrollEnabled={false}
-                />
-              )
-            }
-            {
-              chatType.label.includes('cohere') && (
-                <FlatList
-                  data={cohereResponse.messages}
-                  renderItem={renderItem}
-                  scrollEnabled={false}
-                />
-              )
-            }
-            {
-              chatType.label.includes('mistral') && (
-                <FlatList
-                  data={mistralResponse.messages}
                   renderItem={renderItem}
                   scrollEnabled={false}
                 />
@@ -752,40 +528,60 @@ const getStyles = (theme: any) => StyleSheet.create({
     flex: 1,
   },
   chatDescription: {
-    color: theme.textColor,
+    color: theme.textColor + '80',
     textAlign: 'center',
-    marginTop: 15,
+    marginTop: 24,
     fontSize: 13,
     paddingHorizontal: 34,
-    opacity: .8,
-    fontFamily: theme.regularFont
+    fontFamily: theme.regularFont,
   },
   midInput: {
-    marginBottom: 8,
+    marginBottom: 16,
     borderWidth: 1,
     paddingHorizontal: 25,
-    marginHorizontal: 10,
+    marginHorizontal: 14,
     paddingVertical: 15,
-    borderRadius: 99,
+    borderRadius: 16,
     color: theme.textColor,
     borderColor: theme.borderColor,
     fontFamily: theme.mediumFont,
+    backgroundColor: theme.backgroundColor,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  midButtonContainer: {
+    marginHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: theme.tintColor,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
   },
   midButtonStyle: {
     flexDirection: 'row',
-    marginHorizontal: 14,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 99,
-    backgroundColor: theme.tintColor,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+  },
+  midButtonIcon: {
+    marginRight: 12,
   },
   midButtonText: {
     color: theme.tintTextColor,
-    marginLeft: 10,
     fontFamily: theme.boldFont,
-    fontSize: 16
+    fontSize: 16,
   },
   midChatInputWrapper: {
     flex: 1,

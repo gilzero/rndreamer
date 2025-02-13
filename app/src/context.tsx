@@ -12,7 +12,9 @@ const AppContext = createContext<IAppContext>({
   chatType: MODELS.gpt,
   setChatType: () => null,
   handlePresentModalPress: () => null,
-  closeModal: () => null
+  closeModal: () => null,
+  clearChat: () => null,
+  clearChatRef: { current: undefined }
 })
 
 export {

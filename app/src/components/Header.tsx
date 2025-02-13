@@ -4,27 +4,42 @@ import {
 import { useContext } from 'react'
 import { Icon } from './Icon'
 import { ThemeContext, AppContext } from '../../src/context'
-import FontAwesome from '@expo/vector-icons/FontAwesome5'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 export function Header() {
   const { theme } = useContext(ThemeContext)
   const {
-    handlePresentModalPress
+    handlePresentModalPress,
+    clearChat
   } = useContext(AppContext)
   const styles = getStyles(theme)
 
   return (
     <View style={styles.container}>
-      <Icon size={34} fill={theme.textColor} />
       <TouchableHighlight
-        style={styles.buttonContainer}
+        style={styles.leftButtonContainer}
         underlayColor={'transparent'}
         activeOpacity={0.6}
         onPress={handlePresentModalPress}
       >
-        <FontAwesome
-          name="ellipsis-h"
-          size={20}
+        <Ionicons
+          name="ellipsis-horizontal"
+          size={24}
+          color={theme.textColor}
+        />
+      </TouchableHighlight>
+
+      <Icon size={34} fill={theme.textColor} />
+
+      <TouchableHighlight
+        style={styles.rightButtonContainer}
+        underlayColor={'transparent'}
+        activeOpacity={0.6}
+        onPress={clearChat}
+      >
+        <Ionicons
+          name="add-circle-outline"
+          size={24}
           color={theme.textColor}
         />
       </TouchableHighlight>
@@ -34,8 +49,14 @@ export function Header() {
 
 function getStyles(theme:any) {
   return StyleSheet.create({
-    buttonContainer: {
-      position: 'absolute', right: 15,
+    leftButtonContainer: {
+      position: 'absolute',
+      left: 15,
+      padding: 15
+    },
+    rightButtonContainer: {
+      position: 'absolute',
+      right: 15,
       padding: 15
     },
     container: {

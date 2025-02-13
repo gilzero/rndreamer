@@ -27,6 +27,7 @@ LogBox.ignoreLogs([
 export default function App() {
   const [chatType, setChatType] = useState<Model>(MODELS.gpt)
   const [modalVisible, setModalVisible] = useState<boolean>(false)
+  const clearChatRef = useRef<() => void>()
   const [fontsLoaded] = useFonts({
     'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
     'Geist-Light': require('./assets/fonts/Geist-Light.otf'),
@@ -72,6 +73,10 @@ export default function App() {
     AsyncStorage.setItem('rnai-chatType', JSON.stringify(type))
   }
 
+  function clearChat() {
+    clearChatRef.current?.()
+  }
+
   const bottomSheetStyles = getBottomsheetStyles(lightTheme)
 
   if (!fontsLoaded) return null
@@ -82,7 +87,9 @@ export default function App() {
           chatType,
           setChatType: _setChatType,
           handlePresentModalPress,
-          closeModal
+          closeModal,
+          clearChat,
+          clearChatRef
         }}
       >
         <ThemeContext.Provider value={{
