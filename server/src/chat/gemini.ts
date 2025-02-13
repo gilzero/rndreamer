@@ -1,5 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { Request, Response } from "express"
 
 export async function gemini(req: Request, res: Response) {
@@ -16,26 +15,27 @@ export async function gemini(req: Request, res: Response) {
       })
     }
 
-    const genAIInit = new GoogleGenerativeAI(`${process.env.GEMINI_API_KEY}`)
-
-    // For text-only input, use the gemini-pro model
-    const model = genAIInit.getGenerativeModel({
-      model: "gemini-pro",
+    const model = new ChatGoogleGenerativeAI({
+      modelName: "gemini-2.0-flash",
+      apiKey: process.env.GEMINI_API_KEY,
+      streaming: true,
     })
-    
-    const geminiResult = await model.generateContentStream(prompt)
 
-    if (geminiResult && geminiResult.stream) {
-        await streamToStdout(geminiResult.stream, res)
-      } else {
-        res.end()
+    const stream = await model.stream(prompt)
+
+    for await (const chunk of stream) {
+      if (chunk.content) {
+        res.write(`data: ${JSON.stringify(chunk.content)}\n\n`)
       }
-  
-    } catch (err) {
-      console.log('error in Gemini chat: ', err)
-      res.write('data: [DONE]\n\n')
-      res.end()
     }
+
+    res.write('data: [DONE]\n\n')
+    res.end()
+  } catch (err) {
+    console.log('error in Gemini chat: ', err)
+    res.write('data: [DONE]\n\n')
+    res.end()
+  }
 }
 
 export async function streamToStdout(stream :any, res: Response) {
