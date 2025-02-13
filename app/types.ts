@@ -23,7 +23,6 @@ export interface IOpenAIStateWithIndex {
 
 export interface IThemeContext {
   theme: any
-  setTheme: Dispatch<SetStateAction<string>>
   themeName: string
 }
 
@@ -37,9 +36,5 @@ export interface IAppContext {
   chatType: Model
   setChatType: Dispatch<SetStateAction<Model>>
   handlePresentModalPress: () => void
-  setImageModel: Dispatch<SetStateAction<string>>
-  imageModel: string,
-  closeModal: () => void,
-  illusionImage: string,
-  setIllusionImage: Dispatch<SetStateAction<string>>,
+  closeModal: () => void
 }

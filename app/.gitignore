@@ -38,3 +38,7 @@ yarn-error.*
 # uploads
 uploads/
 
+# ide
+.vscode/
+.idea/
+.cursorrules

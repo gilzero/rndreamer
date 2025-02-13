@@ -4,8 +4,8 @@ import { NavigationContainer } from '@react-navigation/native'
 import { Main } from './src/main'
 import { useFonts } from 'expo-font'
 import { ThemeContext, AppContext } from './src/context'
-import * as themes from './src/theme'
-import { IMAGE_MODELS, MODELS, ILLUSION_DIFFUSION_IMAGES } from './constants'
+import { lightTheme } from './src/theme'
+import { MODELS } from './constants'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { ChatModelModal } from './src/components/index'
 import { Model } from './types'
@@ -25,11 +25,8 @@ LogBox.ignoreLogs([
 ])
 
 export default function App() {
-  const [theme, setTheme] = useState<string>('light')
-  const [chatType, setChatType] = useState<Model>(MODELS.gptTurbo)
-  const [imageModel, setImageModel] = useState<string>(IMAGE_MODELS.fastImage.label)
+  const [chatType, setChatType] = useState<Model>(MODELS.gpt)
   const [modalVisible, setModalVisible] = useState<boolean>(false)
-  const [illusionImage, setIllusionImage] = useState<string>(ILLUSION_DIFFUSION_IMAGES.mediumSquares.label)
   const [fontsLoaded] = useFonts({
     'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
     'Geist-Light': require('./assets/fonts/Geist-Light.otf'),
@@ -48,12 +45,8 @@ export default function App() {
 
   async function configureStorage() {
     try {
-      const _theme = await AsyncStorage.getItem('rnai-theme')
-      if (_theme) setTheme(_theme)
       const _chatType = await AsyncStorage.getItem('rnai-chatType')
       if (_chatType) setChatType(JSON.parse(_chatType))
-      const _imageModel = await AsyncStorage.getItem('rnai-imageModel')
-      if (_imageModel) setImageModel(_imageModel)
     } catch (err) {
       console.log('error configuring storage', err)
     }
@@ -79,17 +72,7 @@ export default function App() {
     AsyncStorage.setItem('rnai-chatType', JSON.stringify(type))
   }
 
-  function _setImageModel(model) {
-    setImageModel(model)
-    AsyncStorage.setItem('rnai-imageModel', model)
-  }
-
-  function _setTheme(theme) {
-    setTheme(theme)
-    AsyncStorage.setItem('rnai-theme', theme)
-  }
-
-  const bottomSheetStyles = getBottomsheetStyles(theme)
+  const bottomSheetStyles = getBottomsheetStyles(lightTheme)
 
   if (!fontsLoaded) return null
   return (
@@ -99,17 +82,12 @@ export default function App() {
           chatType,
           setChatType: _setChatType,
           handlePresentModalPress,
-          imageModel,
-          setImageModel: _setImageModel,
-          closeModal,
-          illusionImage,
-          setIllusionImage
+          closeModal
         }}
       >
         <ThemeContext.Provider value={{
-          theme: getTheme(theme),
-          themeName: theme,
-          setTheme: _setTheme
+          theme: lightTheme,
+          themeName: 'light'
           }}>
           <ActionSheetProvider>
             <NavigationContainer>
@@ -156,13 +134,3 @@ const getBottomsheetStyles = theme => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, .3)'
   }
 })
-
-function getTheme(theme: any) {
-  let current
-  Object.keys(themes).forEach(_theme => {
-    if (_theme.includes(theme)) {
-      current = themes[_theme]
-    }
-  })
-  return current
-}
