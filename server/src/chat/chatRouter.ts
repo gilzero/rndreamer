@@ -9,6 +9,7 @@
  * @requires ./claude
  * @requires ./gemini
  * @requires ../config/validation
+ * @requires ../config/rateLimit
  */
 
 import { Router } from 'express'
@@ -16,8 +17,12 @@ import { gpt } from './gpt'
 import { claude } from './claude'
 import { gemini } from './gemini'
 import { validateMessages } from '../config/validation'
+import { apiLimiter, gptLimiter, claudeLimiter, geminiLimiter } from '../config/rateLimit'
 
 const router = Router()
+
+// Apply general rate limiting to all chat routes
+router.use(apiLimiter)
 
 /**
  * Middleware to validate incoming chat messages.
@@ -48,8 +53,9 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/gpt', gpt)
-router.post('/claude', claude)
-router.post('/gemini', gemini)
+// Apply provider-specific rate limits to each route
+router.post('/gpt', gptLimiter, gpt)
+router.post('/claude', claudeLimiter, claude)
+router.post('/gemini', geminiLimiter, gemini)
 
 export default router
