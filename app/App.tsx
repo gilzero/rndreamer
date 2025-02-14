@@ -12,6 +12,7 @@ import { ChatModelModal } from './src/components/index'
 import { Model } from './types'
 import { ActionSheetProvider } from '@expo/react-native-action-sheet'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SplashScreen from 'expo-splash-screen'
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -20,9 +21,22 @@ import {
 } from '@gorhom/bottom-sheet'
 import { StyleSheet, LogBox } from 'react-native'
 
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync()
+
+/**
+ * Temporarily ignoring specific warnings:
+ * 1. Image Picker Warning: This is kept as a placeholder for future implementation.
+ *    When implementing image upload functionality:
+ *    - Use result.canceled instead of result.cancelled
+ *    - Example usage:
+ *      const result = await ImagePicker.launchImageLibraryAsync();
+ *      if (!result.canceled) {
+ *        // Handle selected image
+ *      }
+ */
 LogBox.ignoreLogs([
-  'Key "cancelled" in the image picker result is deprecated and will be removed in SDK 48, use "canceled" instead',
-  'No native splash screen registered'
+  'Key "cancelled" in the image picker result is deprecated and will be removed in SDK 48, use "canceled" instead'
 ])
 
 export default function App() {
@@ -44,6 +58,15 @@ export default function App() {
   useEffect(() => {
     configureStorage()
   }, [])
+
+  useEffect(() => {
+    async function hideSplashScreen() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync()
+      }
+    }
+    hideSplashScreen()
+  }, [fontsLoaded])
 
   async function configureStorage() {
     try {

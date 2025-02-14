@@ -1,15 +1,40 @@
+/**
+ * @fileoverview Claude chat endpoint handler implementation.
+ * Provides streaming chat completion functionality using Anthropic's Claude models.
+ * 
+ * @module claude
+ * @requires express
+ * @requires express-async-handler
+ * @requires ../services/langchainService
+ */
+
 import { Request, Response, NextFunction } from "express"
 import asyncHandler from 'express-async-handler'
 import { langchainService } from '../services/langchainService'
 
-// Use exact model names from environment
+/** Type representing valid model names from environment configuration */
 type ModelName = string;
 
+/**
+ * Interface for the expected request body structure
+ * @interface RequestBody
+ */
 interface RequestBody {
+  /** Array of chat messages with role and content */
   messages: any[];
-  model?: ModelName;  // Make model optional
+  /** Optional model identifier - falls back to default if not provided */
+  model?: ModelName;
 }
 
+/**
+ * Express handler for Claude chat completions.
+ * Sets up SSE connection and streams chat completion responses.
+ * 
+ * @param req - Express request object containing chat messages and optional model
+ * @param res - Express response object for streaming
+ * @param next - Express next function
+ * @throws {Error} If message validation fails or chat completion errors occur
+ */
 export const claude = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     res.writeHead(200, {

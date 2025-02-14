@@ -1,3 +1,15 @@
+/**
+ * @fileoverview LangChain Service implementation for handling chat interactions with multiple AI providers.
+ * This service provides a unified interface for interacting with OpenAI (GPT), Anthropic (Claude),
+ * and Google (Gemini) AI models through the LangChain framework.
+ * 
+ * @module langchainService
+ * @requires @langchain/openai
+ * @requires @langchain/anthropic
+ * @requires @langchain/google-genai
+ * @requires @langchain/core/messages
+ */
+
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";

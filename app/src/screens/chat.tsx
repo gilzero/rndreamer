@@ -28,6 +28,7 @@ import * as Clipboard from 'expo-clipboard'
 import { useActionSheet } from '@expo/react-native-action-sheet'
 import Markdown from '@ronradtke/react-native-markdown-display'
 import { chatService } from '../services/chatService'
+import { getFirstNCharsOrLess, validateMessage, validateMessages } from '../utils'
 
 /**
  * Main Chat component that provides the chat interface and handles messaging logic.
@@ -122,19 +123,34 @@ export function Chat() {
 
     const newMessage: ChatMessage = {
       role: 'user',
-      content: input,
+      content: getFirstNCharsOrLess(input),
       timestamp: Date.now()
+    }
+
+    // Validate the new message
+    const messageError = validateMessage(newMessage)
+    if (messageError) {
+      console.error('Message validation error:', messageError)
+      // TODO: Show error to user via toast/alert
+      return
+    }
+
+    // Validate the entire conversation
+    const allMessages = [...chatState.messages, newMessage]
+    const conversationError = validateMessages(allMessages)
+    if (conversationError) {
+      console.error('Conversation validation error:', conversationError)
+      // TODO: Show error to user via toast/alert
+      return
     }
 
     setChatState(prev => ({
       ...prev,
-      messages: [...prev.messages, newMessage]
+      messages: allMessages
     }))
 
-    // Scroll to bottom after user message with a slight delay to ensure smooth animation
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    // Scroll to bottom after user message using the native scroll behavior
+    scrollToBottom()
 
     setLoading(true)
     setInput('')
@@ -185,13 +201,8 @@ export function Chat() {
               };
             });
 
-            // Implement debounced scrolling using requestAnimationFrame
-            // This prevents excessive scroll updates while maintaining smooth UI
-            if (scrollViewRef.current) {
-              requestAnimationFrame(() => {
-                scrollViewRef.current?.scrollToEnd({ animated: false });
-              });
-            }
+            // Use requestAnimationFrame for smooth scrolling during streaming
+            requestAnimationFrame(scrollToBottom);
           },
           onError: (error) => {
             console.error('Chat error:', error)
@@ -199,16 +210,24 @@ export function Chat() {
           },
           onComplete: () => {
             setLoading(false)
-            // Final scroll to ensure we're at the bottom
-            setTimeout(() => {
-              scrollViewRef.current?.scrollToEnd({ animated: true });
-            }, 100);
+            // Final scroll using the native scroll behavior
+            scrollToBottom()
           }
         }
       )
     } catch (error) {
       console.error('Failed to send message:', error)
       setLoading(false)
+    }
+  }
+
+  /**
+   * Handles scrolling to the bottom of the chat
+   * Uses native scroll behavior for smooth animation
+   */
+  const scrollToBottom = () => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
     }
   }
 
@@ -290,9 +309,8 @@ export function Chat() {
           !callMade && styles.scrollContentContainer,
           { paddingBottom: 20 }
         ]}
-        onContentSizeChange={() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }}
+        onContentSizeChange={scrollToBottom}
+        onLayout={scrollToBottom}
       >
         {!callMade ? (
           <View style={styles.midChatInputWrapper}>
