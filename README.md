@@ -4,7 +4,7 @@
 
 Full stack framework for building cross-platform mobile AI apps supporting LLM real-time / streaming text and chat UIs, image services and natural language to images with multiple models, and image processing.
 
-![React Native AI](https://i.imgur.com/AOOgBM0.png)
+ 
 
 
 
@@ -39,13 +39,5 @@ The server environment variables are available in `server/.env.example`. If alre
 
 
 
-## Configuring LLM Models
-
-
-
-### On the server
-
-Create a new file in the `server/src/chat` folder that corresponds to the model type you created in the mobile app. You can probably copy and re-use a lot of the streaming code from the other existing paths to get you started.
-
-Next, update `server/src/chat/chatRouter` to use the new route.
+ 
 
