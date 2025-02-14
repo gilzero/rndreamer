@@ -2,16 +2,12 @@ import { Request, Response, NextFunction } from "express"
 import asyncHandler from 'express-async-handler'
 import { langchainService } from '../services/langchainService'
 
-type ModelName = 'claude-3-5-sonnet-latest' | 'claude-3-5-haiku-latest';
-
-const models: Record<string, ModelName> = {
-  claude: 'claude-3-5-sonnet-latest',
-  claudeInstant: 'claude-3-5-haiku-latest'
-}
+// Use exact model names from environment
+type ModelName = string;
 
 interface RequestBody {
   messages: any[];
-  model: ModelName;
+  model?: ModelName;  // Make model optional
 }
 
 export const claude = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -30,9 +26,10 @@ export const claude = asyncHandler(async (req: Request, res: Response, next: Nex
       return
     }
 
+    // If no model specified, let langchainService use the default from env
     await langchainService.streamChat(messages, {
       provider: 'claude',
-      model
+      ...(model && { model })  // Only include model if it's provided
     }, res)
   } catch (err) {
     console.error('Error in Claude chat:', err)

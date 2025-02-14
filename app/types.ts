@@ -20,9 +20,10 @@ export interface ChatState {
 export type ModelProvider = 'gpt' | 'claude' | 'gemini';
 
 export interface Model {
-  name: string;
-  label: ModelProvider;
+  name: string;          // The actual model name used in API calls
+  label: ModelProvider;  // Provider identifier
   icon: React.ComponentType<any>;
+  displayName: string;   // User-friendly name for display
 }
 
 // Context Types

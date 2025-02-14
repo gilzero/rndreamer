@@ -1,5 +1,8 @@
-// @file-overview: chat screen for the app
-// @file-path: app/src/screens/chat.tsx
+/**
+ * @fileoverview Main chat screen component that handles real-time messaging with AI models
+ * Supports streaming responses, message history, and UI interactions like copying and clearing chat
+ */
+
 import React, { useEffect } from 'react'
 import {
   View,
@@ -26,22 +29,40 @@ import { useActionSheet } from '@expo/react-native-action-sheet'
 import Markdown from '@ronradtke/react-native-markdown-display'
 import { chatService } from '../services/chatService'
 
+/**
+ * Main Chat component that provides the chat interface and handles messaging logic.
+ * Manages the chat state, handles user input, and coordinates with AI models for responses.
+ * @component
+ */
 export function Chat() {
+  // State Management
+  /** Controls loading state during AI responses */
   const [loading, setLoading] = useState<boolean>(false)
+  /** Manages current user input text */
   const [input, setInput] = useState<string>('')
+  /** Maintains chat history and session information */
   const [chatState, setChatState] = useState<ChatState>({
     messages: [],
     index: uuid()
   })
+
+  // Refs and Hooks
+  /** Reference for auto-scrolling the chat view */
   const scrollViewRef = useRef<ScrollView | null>(null)
   const { showActionSheetWithOptions } = useActionSheet()
+  /** Animation value for general button scaling */
   const buttonScale = useRef(new Animated.Value(1)).current
+  /** Animation value specific to send button scaling */
   const sendButtonScale = useRef(new Animated.Value(1)).current
 
+  // Context
   const { theme } = useContext(ThemeContext)
   const { chatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme)
 
+  /**
+   * Sets up the clear chat functionality through the ref passed from parent
+   */
   useEffect(() => {
     if (clearChatRef) {
       clearChatRef.current = handleClearChat
@@ -53,6 +74,10 @@ export function Chat() {
     }
   }, [])
 
+  /**
+   * Clears the entire chat history and resets input
+   * Prevents clearing during active loading state
+   */
   function handleClearChat() {
     if (loading) return
     setChatState({
@@ -62,6 +87,10 @@ export function Chat() {
     setInput('')
   }
 
+  /**
+   * Handles button press animation
+   * @param scale - Animated value to control the scaling effect
+   */
   const animateButton = (scale: Animated.Value) => {
     Animated.sequence([
       Animated.timing(scale, {
@@ -79,6 +108,13 @@ export function Chat() {
     ]).start()
   }
 
+  /**
+   * Main chat handling function that:
+   * 1. Processes user input
+   * 2. Updates chat state
+   * 3. Manages streaming response from AI
+   * 4. Handles UI updates during streaming
+   */
   async function chat() {
     if (!input.trim()) return
     animateButton(sendButtonScale)
@@ -95,7 +131,7 @@ export function Chat() {
       messages: [...prev.messages, newMessage]
     }))
 
-    // Scroll to bottom after user message
+    // Scroll to bottom after user message with a slight delay to ensure smooth animation
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
@@ -103,6 +139,9 @@ export function Chat() {
     setLoading(true)
     setInput('')
 
+    // responseMap maintains the state of streaming responses for each message
+    // This allows for efficient updates without re-rendering the entire message list
+    // Each messageId maps to its accumulated content as tokens arrive
     const responseMap = new Map<string, string>();
 
     try {
@@ -114,15 +153,19 @@ export function Chat() {
           streaming: true
         },
         {
+          // Handle incoming tokens from the streaming response
           onToken: (token, messageId) => {
+            // Accumulate tokens for the current message
             const currentContent = responseMap.get(messageId) || '';
             const newContent = currentContent + token;
             responseMap.set(messageId, newContent);
 
+            // Update the chat state with the new content
             setChatState(prev => {
               const messages = [...prev.messages];
               const lastMessage = messages[messages.length - 1];
               
+              // Update existing assistant message or create new one
               if (lastMessage?.role === 'assistant') {
                 messages[messages.length - 1] = {
                   ...lastMessage,
@@ -142,7 +185,8 @@ export function Chat() {
               };
             });
 
-            // Scroll to bottom with each token, but with a debounce effect
+            // Implement debounced scrolling using requestAnimationFrame
+            // This prevents excessive scroll updates while maintaining smooth UI
             if (scrollViewRef.current) {
               requestAnimationFrame(() => {
                 scrollViewRef.current?.scrollToEnd({ animated: false });
@@ -168,6 +212,11 @@ export function Chat() {
     }
   }
 
+  /**
+   * Renders individual chat messages with appropriate styling
+   * Handles both user messages and AI responses with markdown support
+   * @param item - Chat message to render
+   */
   function renderItem({ item }: { item: ChatMessage }) {
     return (
       <Animated.View style={[styles.promptResponse]}>
@@ -198,10 +247,18 @@ export function Chat() {
     )
   }
 
+  /**
+   * Copies given text to clipboard
+   * @param text - Text to copy
+   */
   async function copyToClipboard(text: string) {
     await Clipboard.setStringAsync(text)
   }
 
+  /**
+   * Shows action sheet with options to copy text or clear chat
+   * @param text - Text to copy if copy option is selected
+   */
   async function showClipboardActionsheet(text: string) {
     const cancelButtonIndex = 2
     showActionSheetWithOptions({
@@ -217,6 +274,7 @@ export function Chat() {
     })
   }
 
+  /** Flag indicating if any chat messages exist */
   const callMade = chatState.messages.length > 0
 
   return (
@@ -269,7 +327,7 @@ export function Chat() {
                     style={styles.midButtonIcon}
                   />
                   <Text style={styles.midButtonText}>
-                    Start {chatType.name} Chat
+                    Start {chatType.displayName} Chat
                   </Text>
                 </Animated.View>
               </TouchableHighlight>
@@ -329,6 +387,11 @@ export function Chat() {
   )
 }
 
+/**
+ * Generates styles for the chat component based on the current theme
+ * @param theme - Current theme object containing color and font information
+ * @returns StyleSheet object with all component styles
+ */
 const getStyles = (theme: any) => StyleSheet.create({
   optionsIconWrapper: {
     padding: 12,

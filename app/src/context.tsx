@@ -3,7 +3,21 @@ import { IThemeContext, IAppContext } from '../types'
 import { MODELS } from '../constants'
 
 const ThemeContext = createContext<IThemeContext>({
-  theme: {},
+  theme: {
+    textColor: '',
+    backgroundColor: '',
+    tintColor: '',
+    borderColor: '',
+    placeholderTextColor: '',
+    tintTextColor: '',
+    secondaryTextColor: '',
+    secondaryBackgroundColor: '',
+    regularFont: '',
+    mediumFont: '',
+    boldFont: '',
+    semiBoldFont: '',
+    lightFont: ''
+  },
   setTheme: () => null,
   themeName: ''
 })

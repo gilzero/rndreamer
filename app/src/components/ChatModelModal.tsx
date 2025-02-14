@@ -35,7 +35,7 @@ export function ChatModelModal({ handlePresentModalPress }) {
                  selected={chatType.label === option.label}
                 />
                 <Text style={optionText(theme, chatType.label, option.label)}>
-                  {option.name}
+                  {option.displayName}
                 </Text>
               </View>
             </TouchableHighlight>

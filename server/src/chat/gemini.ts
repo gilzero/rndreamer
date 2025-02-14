@@ -2,6 +2,14 @@ import { Request, Response } from "express";
 import asyncHandler from 'express-async-handler';
 import { langchainService } from '../services/langchainService';
 
+// Use exact model names from environment
+type ModelName = string;
+
+interface RequestBody {
+  messages: any[];
+  model?: ModelName;  // Make model optional
+}
+
 export const gemini = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   try {
     res.writeHead(200, {
@@ -10,7 +18,7 @@ export const gemini = asyncHandler(async (req: Request, res: Response): Promise<
       'Cache-Control': 'no-cache'
     });
 
-    const { messages, model } = req.body;
+    const { messages, model }: RequestBody = req.body;
     if (!messages || !messages.length) {
       res.json({
         error: 'no messages'
@@ -18,9 +26,10 @@ export const gemini = asyncHandler(async (req: Request, res: Response): Promise<
       return;
     }
 
+    // If no model specified, let langchainService use the default from env
     await langchainService.streamChat(messages, {
       provider: 'gemini',
-      model
+      ...(model && { model })  // Only include model if it's provided
     }, res);
   } catch (err) {
     console.error('Error in Gemini chat:', err);
