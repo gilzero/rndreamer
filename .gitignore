@@ -1,0 +1,12 @@
+# project
+.DS_Store
+
+# ide
+.idea/
+.vscode/
+
+# node
+node_modules/
+
+# uploads
+uploads/
