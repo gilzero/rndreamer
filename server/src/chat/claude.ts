@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import asyncHandler from 'express-async-handler'
-import { ChatAnthropic } from "@langchain/anthropic"
+import { langchainService } from '../services/langchainService'
 
 type ModelName = 'claude-3-5-sonnet-latest' | 'claude-3-5-haiku-latest';
 
@@ -10,7 +10,7 @@ const models: Record<string, ModelName> = {
 }
 
 interface RequestBody {
-  prompt: any;
+  messages: any[];
   model: ModelName;
 }
 
@@ -22,32 +22,20 @@ export const claude = asyncHandler(async (req: Request, res: Response, next: Nex
       'Cache-Control': 'no-cache'
     })
 
-    const { prompt, model }: RequestBody = req.body
-    if (!prompt) {
+    const { messages, model }: RequestBody = req.body
+    if (!messages || !messages.length) {
       res.json({
-        error: 'no prompt'
+        error: 'no messages'
       })
       return
     }
 
-    const chat = new ChatAnthropic({
-      modelName: models[model],
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-      streaming: true,
-    })
-
-    const stream = await chat.stream(prompt)
-
-    for await (const chunk of stream) {
-      if (chunk.content) {
-        res.write(`data: ${JSON.stringify({ delta: { text: chunk.content } })}\n\n`)
-      }
-    }
-
-    res.write('data: [DONE]\n\n')
-    res.end()
+    await langchainService.streamChat(messages, {
+      provider: 'claude',
+      model
+    }, res)
   } catch (err) {
-    console.log('error in claude chat: ', err)
+    console.error('Error in Claude chat:', err)
     res.write('data: [DONE]\n\n')
     res.end()
   }

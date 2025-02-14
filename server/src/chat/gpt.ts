@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import asyncHandler from 'express-async-handler'
-import { ChatOpenAI } from "@langchain/openai"
+import { langchainService } from '../services/langchainService'
 
 type ModelName = 'gpt-4o' | 'gpt-4o-mini';
 
@@ -22,7 +22,7 @@ export const gpt = asyncHandler(async (req: Request, res: Response, next: NextFu
       'Cache-Control': 'no-cache'
     })
 
-    const { model, messages }: RequestBody = req.body
+    const { messages, model }: RequestBody = req.body
     if (!messages || !messages.length) {
       res.json({
         error: 'no messages'
@@ -30,24 +30,12 @@ export const gpt = asyncHandler(async (req: Request, res: Response, next: NextFu
       return
     }
 
-    const chat = new ChatOpenAI({
-      modelName: models[model],
-      openAIApiKey: process.env.OPENAI_API_KEY,
-      streaming: true,
-    })
-
-    const stream = await chat.stream(messages)
-
-    for await (const chunk of stream) {
-      if (chunk.content) {
-        res.write(`data: ${JSON.stringify({ delta: { content: chunk.content } })}\n\n`)
-      }
-    }
-
-    res.write('data: [DONE]\n\n')
-    res.end()
+    await langchainService.streamChat(messages, {
+      provider: 'gpt',
+      model
+    }, res)
   } catch (err) {
-    console.log('error in gpt chat: ', err)
+    console.error('Error in GPT chat:', err)
     res.write('data: [DONE]\n\n')
     res.end()
   }

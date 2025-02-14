@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler'
+import './src/polyfills'
 import { useState, useEffect, useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { Main } from './src/main'

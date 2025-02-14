@@ -1,42 +1,33 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
-import { Request, Response } from "express"
+import { Request, Response } from "express";
+import asyncHandler from 'express-async-handler';
+import { langchainService } from '../services/langchainService';
 
-export async function gemini(req: Request, res: Response) {
+export const gemini = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   try {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Connection': 'keep-alive',
       'Cache-Control': 'no-cache'
-    })
-    const { prompt } = req.body
-    if (!prompt) {
-      return res.json({
-        error: 'no prompt'
-      })
+    });
+
+    const { messages, model } = req.body;
+    if (!messages || !messages.length) {
+      res.json({
+        error: 'no messages'
+      });
+      return;
     }
 
-    const model = new ChatGoogleGenerativeAI({
-      modelName: "gemini-2.0-flash",
-      apiKey: process.env.GEMINI_API_KEY,
-      streaming: true,
-    })
-
-    const stream = await model.stream(prompt)
-
-    for await (const chunk of stream) {
-      if (chunk.content) {
-        res.write(`data: ${JSON.stringify(chunk.content)}\n\n`)
-      }
-    }
-
-    res.write('data: [DONE]\n\n')
-    res.end()
+    await langchainService.streamChat(messages, {
+      provider: 'gemini',
+      model
+    }, res);
   } catch (err) {
-    console.log('error in Gemini chat: ', err)
-    res.write('data: [DONE]\n\n')
-    res.end()
+    console.error('Error in Gemini chat:', err);
+    res.write('data: [DONE]\n\n');
+    res.end();
   }
-}
+});
 
 export async function streamToStdout(stream :any, res: Response) {
   for await (const chunk of stream) {

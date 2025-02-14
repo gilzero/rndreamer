@@ -39,5 +39,12 @@ The server environment variables are available in `server/.env.example`. If alre
 
 
 
- 
+## Roadmap
+
+- [x] Add refactor with LangChain
+- [ ] Add support for [Groq](https://groq.com)
+- [ ] Add reasoning models
+- [ ] Add web models (perplexity)
+- [ ] Add dreamer watch model
+- [ ] ...
 

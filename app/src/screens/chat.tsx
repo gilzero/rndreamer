@@ -95,10 +95,15 @@ export function Chat() {
       messages: [...prev.messages, newMessage]
     }))
 
+    // Scroll to bottom after user message
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
     setLoading(true)
     setInput('')
 
-    let localResponse = ''
+    const responseMap = new Map<string, string>();
 
     try {
       await chatService.streamChat(
@@ -109,21 +114,39 @@ export function Chat() {
           streaming: true
         },
         {
-          onToken: (token) => {
-            localResponse += token
-            setChatState(prev => ({
-              ...prev,
-              messages: [
-                ...prev.messages,
-                {
+          onToken: (token, messageId) => {
+            const currentContent = responseMap.get(messageId) || '';
+            const newContent = currentContent + token;
+            responseMap.set(messageId, newContent);
+
+            setChatState(prev => {
+              const messages = [...prev.messages];
+              const lastMessage = messages[messages.length - 1];
+              
+              if (lastMessage?.role === 'assistant') {
+                messages[messages.length - 1] = {
+                  ...lastMessage,
+                  content: newContent
+                };
+              } else {
+                messages.push({
                   role: 'assistant',
-                  content: localResponse,
+                  content: newContent,
                   timestamp: Date.now()
-                }
-              ]
-            }))
-            if (localResponse.length < 850) {
-              scrollViewRef.current?.scrollToEnd({ animated: true })
+                });
+              }
+
+              return {
+                ...prev,
+                messages
+              };
+            });
+
+            // Scroll to bottom with each token, but with a debounce effect
+            if (scrollViewRef.current) {
+              requestAnimationFrame(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: false });
+              });
             }
           },
           onError: (error) => {
@@ -132,6 +155,10 @@ export function Chat() {
           },
           onComplete: () => {
             setLoading(false)
+            // Final scroll to ensure we're at the bottom
+            setTimeout(() => {
+              scrollViewRef.current?.scrollToEnd({ animated: true });
+            }, 100);
           }
         }
       )
@@ -205,6 +232,9 @@ export function Chat() {
           !callMade && styles.scrollContentContainer,
           { paddingBottom: 20 }
         ]}
+        onContentSizeChange={() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }}
       >
         {!callMade ? (
           <View style={styles.midChatInputWrapper}>

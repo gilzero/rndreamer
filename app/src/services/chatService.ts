@@ -1,12 +1,8 @@
 // @file-overview: chat service for the app
 // @file-path: app/src/services/chatService.ts
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
-import { StringOutputParser } from "@langchain/core/output_parsers";
-import { RunnableSequence } from "@langchain/core/runnables";
 import { ChatMessage, ModelProvider } from "../../types";
+import { DOMAIN } from "../../constants";
+import EventSource from 'react-native-sse';
 
 export interface ChatOptions {
   provider: ModelProvider;
@@ -16,66 +12,14 @@ export interface ChatOptions {
 }
 
 export interface ChatCallbacks {
-  onToken: (token: string) => void;
+  onToken: (token: string, messageId: string) => void;
   onError: (error: Error) => void;
   onComplete: () => void;
 }
 
 class ChatService {
-  private modelInstances: Map<string, ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI> = new Map();
-
-  private createModel(options: ChatOptions) {
-    const { provider, model, temperature = 0.7, streaming = true } = options;
-
-    try {
-      switch (provider) {
-        case "gpt":
-          return new ChatOpenAI({
-            modelName: model,
-            temperature,
-            streaming,
-          });
-        case "claude":
-          return new ChatAnthropic({
-            modelName: model,
-            temperature,
-            streaming,
-          });
-        case "gemini":
-          return new ChatGoogleGenerativeAI({
-            modelName: model,
-            temperature,
-            streaming,
-          });
-        default:
-          throw new Error(`Unsupported provider: ${provider}`);
-      }
-    } catch (error: unknown) {
-      throw new Error(`Failed to create model: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private getModel(options: ChatOptions) {
-    const key = `${options.provider}-${options.model}`;
-    if (!this.modelInstances.has(key)) {
-      this.modelInstances.set(key, this.createModel(options));
-    }
-    return this.modelInstances.get(key)!;
-  }
-
-  private convertToLangChainMessages(messages: ChatMessage[]) {
-    return messages.map(msg => {
-      switch (msg.role) {
-        case 'user':
-          return new HumanMessage(msg.content);
-        case 'assistant':
-          return new AIMessage(msg.content);
-        case 'system':
-          return new SystemMessage(msg.content);
-        default:
-          throw new Error(`Unsupported message role: ${msg.role}`);
-      }
-    });
+  private getApiUrl() {
+    return DOMAIN;
   }
 
   async streamChat(
@@ -84,24 +28,43 @@ class ChatService {
     callbacks: ChatCallbacks
   ) {
     const { onToken, onError, onComplete } = callbacks;
+    const { provider, model } = options;
 
     try {
-      const model = this.getModel(options);
-      const chain = RunnableSequence.from([
-        {
-          input: (messages: ChatMessage[]) => this.convertToLangChainMessages(messages),
+      const es = new EventSource(`${this.getApiUrl()}/chat/${provider}`, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        model,
-        new StringOutputParser(),
-      ]);
+        method: 'POST',
+        body: JSON.stringify({
+          messages,
+          model
+        }),
+      });
 
-      const stream = await chain.stream(messages);
+      es.addEventListener('message', (event) => {
+        if (!event.data) return;
+        if (event.data === '[DONE]') {
+          es.close();
+          onComplete();
+          return;
+        }
+        try {
+          const parsed = JSON.parse(event.data);
+          const content = parsed.delta?.content || '';
+          const messageId = parsed.id;
+          if (content && messageId) {
+            onToken(content, messageId);
+          }
+        } catch (e) {
+          console.warn('Failed to parse chunk:', e);
+        }
+      });
 
-      for await (const chunk of stream) {
-        onToken(chunk);
-      }
-      
-      onComplete();
+      es.addEventListener('error', (error) => {
+        es.close();
+        onError(error instanceof Error ? error : new Error('Stream error occurred'));
+      });
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Unknown error occurred'));
     }
@@ -109,16 +72,24 @@ class ChatService {
 
   async chat(messages: ChatMessage[], options: ChatOptions): Promise<string> {
     try {
-      const model = this.getModel(options);
-      const chain = RunnableSequence.from([
-        {
-          input: (messages: ChatMessage[]) => this.convertToLangChainMessages(messages),
+      const { provider, model } = options;
+      const response = await fetch(`${this.getApiUrl()}/chat/${provider}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        model,
-        new StringOutputParser(),
-      ]);
+        body: JSON.stringify({
+          messages,
+          model
+        })
+      });
 
-      return await chain.invoke(messages);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.content || '';
     } catch (error) {
       throw error instanceof Error ? error : new Error('Unknown error occurred');
     }
