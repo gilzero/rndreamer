@@ -38,6 +38,35 @@ npm run dev
 The server environment variables are available in `server/.env.example`. If already not present, update this file name to `.env` and configure server environment variables.
 
 
+## Dev Notes
+
+Use only npm. Remove Bun and Yarn.
+
+When forking the project, perform a clean install.
+Delete the node_modules folder before reinstalling dependencies.
+Delete the .expo folder before reinstalling dependencies.
+Delete the dist folder before reinstalling dependencies.
+Delete the web-build folder before reinstalling dependencies.
+Delete lock files before reinstalling dependencies.
+
+one liner command to clean install:
+
+```sh
+cd app
+rm -rf node_modules .expo dist web-build package-lock.json yarn.lock && npm install
+```
+
+Navigate to the app directory:
+```sh
+cd app
+```
+
+Install metro-config:
+```sh
+npm install metro-config
+``` 
+
+
 
 ## Roadmap
 
