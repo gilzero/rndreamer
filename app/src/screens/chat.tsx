@@ -42,6 +42,8 @@ export function Chat() {
   const [loading, setLoading] = useState<boolean>(false)
   /** Manages current user input text */
   const [input, setInput] = useState<string>('')
+  /** Tracks whether any chat messages have been made */
+  const [callMade, setCallMade] = useState<boolean>(false)
   /** Maintains chat history and session information */
   const [chatState, setChatState] = useState<ChatState>({
     messages: [],
@@ -89,6 +91,7 @@ export function Chat() {
       index: uuid()
     })
     setInput('')
+    setCallMade(false)
   }
 
   /**
@@ -185,6 +188,11 @@ export function Chat() {
     if (!input.trim()) return
     animateButton(sendButtonScale)
     Keyboard.dismiss()
+
+    // Set callMade to true when starting a new chat
+    if (!callMade) {
+      setCallMade(true)
+    }
 
     const newMessage: ChatMessage = {
       role: 'user',
@@ -377,9 +385,6 @@ export function Chat() {
       }
     })
   }
-
-  /** Flag indicating if any chat messages exist */
-  const callMade = chatState.messages.length > 0
 
   return (
     <KeyboardAvoidingView
