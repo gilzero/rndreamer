@@ -9,3 +9,18 @@ package-lock.json
 .idea/
 .vscode/
 
+# Expo
+.expo/
+
+# logs
+logs/
+
+# build
+build/
+
+# cache
+cache/
+
+# temp
+temp/
+

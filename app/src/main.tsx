@@ -10,7 +10,7 @@
 import { useContext } from 'react';
 import { StyleSheet, View} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Chat, Settings } from './screens'
+import { Chat, Settings, Agent } from './screens'
 import { Header } from './components'
 import FeatherIcon from '@expo/vector-icons/Feather'
 import {
@@ -163,13 +163,27 @@ function MainComponent() {
         }}
       >
         <Tab.Screen
-          name="Chat"
+          name="AI Chat"
           component={Chat}
           options={{
             header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
               <FeatherIcon
                 name="message-circle"
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="AI Agent"
+          component={Agent}
+          options={{
+            header: () => <Header />,
+            tabBarIcon: ({ color, size }) => (
+              <FeatherIcon
+                name="cpu"
                 color={color}
                 size={size}
               />

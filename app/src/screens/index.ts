@@ -5,9 +5,10 @@
  * 
  * Example usage:
  * ```typescript
- * import { Chat, Settings } from '../screens'
+ * import { Chat, Settings, Agent } from '../screens'
  * ```
  */
 
 export { Chat } from './chat'
+export { Agent } from './agent'
 export { Settings } from './settings'

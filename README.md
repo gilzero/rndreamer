@@ -219,3 +219,93 @@ Install metro-config:
 cd app
 npm install metro-config
 ```
+
+
+## Add new AI model
+
+
+## Required Files
+
+### Frontend (`/app`)
+1. `/app/src/components/[Provider]Icon.tsx`
+   - Create new icon component
+   - Implement provider's visual identity
+   - Follow existing icon component pattern
+
+2. `/app/constants.ts`
+   ```typescript
+   {
+     name: '[default-model-name]',
+     label: '[provider]' as ModelProvider,
+     icon: [Provider]Icon,
+     displayName: '[Display Name]'
+   }
+   ```
+
+3. `/app/types.ts`
+   - Add new provider to ModelProvider type
+   - Update any provider-specific types
+
+4. `/app/src/screens/settings.tsx`
+
+
+5. `/app/src/screens/chat.tsx`
+
+
+
+
+### Backend (`/server`)
+1. `/server/src/chat/[provider].ts`
+   - Implement provider-specific chat handler
+   - Set up streaming response
+   - Handle provider-specific errors
+
+2. `/server/src/chat/chatRouter.ts`
+   - Import new provider handler
+   - Add provider route with rate limiter
+   - Configure provider-specific middleware
+
+3. `/server/src/config/rateLimit.ts`
+   - Add provider rate limit constants
+   - Create provider rate limiter instance
+
+4. Environment Configuration
+   - `/server/.env.example`
+   - `/server/.env`
+
+## Required Environment Variables
+```bash
+[PROVIDER]_API_KEY=""
+[PROVIDER]_MODEL_DEFAULT="[default-model]"
+[PROVIDER]_MODEL_FALLBACK="[fallback-model]"
+[PROVIDER]_TEMPERATURE=0.3
+[PROVIDER]_MAX_TOKENS=8192
+[PROVIDER]_RATE_LIMIT_MAX=200
+```
+
+## Integration Checklist
+- [ ] Create provider icon component
+- [ ] Add provider to MODELS constant
+- [ ] Update TypeScript types
+- [ ] Implement chat handler
+- [ ] Add route to router
+- [ ] Configure rate limiting
+- [ ] Set up environment variables
+- [ ] Test streaming functionality
+- [ ] Verify rate limiting
+- [ ] Test fallback behavior
+
+## Testing
+1. Provider API connection
+2. Streaming responses
+3. Rate limiting
+4. Error handling
+5. Model fallback
+6. UI integration
+
+## Notes
+- Follow existing naming conventions
+- Maintain consistent error handling
+- Implement proper type safety
+- Test thoroughly before deployment
+- Update documentation

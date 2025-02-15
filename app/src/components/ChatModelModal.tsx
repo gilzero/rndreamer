@@ -60,7 +60,7 @@ export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps)
       <View>
         <View style={styles.chatOptionsTextContainer}>
           <Text style={styles.chatOptionsText}>
-            Language Models
+            AI Models
           </Text>
         </View>
         {
