@@ -4,6 +4,16 @@ import { ChatMessage, ModelProvider } from "../../types";
 import { DOMAIN } from "../../constants";
 import EventSource from 'react-native-sse';
 
+export class ChatError extends Error {
+  code: string;
+  
+  constructor(message: string, code: string = 'UNKNOWN_ERROR') {
+    super(message);
+    this.code = code;
+    this.name = 'ChatError';
+  }
+}
+
 export interface ChatOptions {
   provider: ModelProvider;
   model: string;
@@ -58,15 +68,24 @@ class ChatService {
           }
         } catch (e) {
           console.warn('Failed to parse chunk:', e);
+          onError(new ChatError('Failed to parse response from server', 'PARSE_ERROR'));
         }
       });
 
       es.addEventListener('error', (error) => {
         es.close();
-        onError(error instanceof Error ? error : new Error('Stream error occurred'));
+        if (error instanceof Error) {
+          onError(new ChatError(error.message, 'STREAM_ERROR'));
+        } else {
+          onError(new ChatError('Stream error occurred', 'STREAM_ERROR'));
+        }
       });
     } catch (error) {
-      onError(error instanceof Error ? error : new Error('Unknown error occurred'));
+      if (error instanceof Error) {
+        onError(new ChatError(error.message, 'REQUEST_ERROR'));
+      } else {
+        onError(new ChatError('Failed to connect to chat service', 'REQUEST_ERROR'));
+      }
     }
   }
 
@@ -85,13 +104,22 @@ class ChatService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new ChatError(
+          `Server responded with status: ${response.status}`,
+          'HTTP_ERROR'
+        );
       }
 
       const data = await response.json();
       return data.content || '';
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Unknown error occurred');
+      if (error instanceof ChatError) {
+        throw error;
+      } else if (error instanceof Error) {
+        throw new ChatError(error.message, 'REQUEST_ERROR');
+      } else {
+        throw new ChatError('Unknown error occurred', 'UNKNOWN_ERROR');
+      }
     }
   }
 }

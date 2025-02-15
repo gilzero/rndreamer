@@ -42,6 +42,8 @@ export interface IThemeContext {
     boldFont: string;
     semiBoldFont: string;
     lightFont: string;
+    tabBarActiveTintColor: string;
+    tabBarInactiveTintColor: string;
   };
   themeName: string;
   setTheme: Dispatch<SetStateAction<any>>;

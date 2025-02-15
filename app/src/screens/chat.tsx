@@ -27,8 +27,9 @@ import { ChatMessage, ChatState, ModelProvider } from '../../types'
 import * as Clipboard from 'expo-clipboard'
 import { useActionSheet } from '@expo/react-native-action-sheet'
 import Markdown from '@ronradtke/react-native-markdown-display'
-import { chatService } from '../services/chatService'
-import { getFirstNCharsOrLess, validateMessage, validateMessages } from '../utils'
+import { chatService, ChatError } from '../services/chatService'
+import { getFirstNCharsOrLess, validateMessage, validateMessages, MessageValidationError, MESSAGE_LIMITS } from '../utils'
+import Toast from 'react-native-toast-message'
 
 /**
  * Main Chat component that provides the chat interface and handles messaging logic.
@@ -110,6 +111,28 @@ export function Chat() {
   }
 
   /**
+   * Shows error toast message with appropriate styling based on error type
+   * @param error - Error object from chat service
+   */
+  const showErrorToast = (error: ChatError) => {
+    const errorMessages: Record<string, string> = {
+      'PARSE_ERROR': 'Failed to process AI response',
+      'STREAM_ERROR': 'Connection interrupted',
+      'REQUEST_ERROR': 'Failed to connect to chat service',
+      'HTTP_ERROR': 'Server error occurred',
+      'UNKNOWN_ERROR': 'An unexpected error occurred'
+    };
+
+    Toast.show({
+      type: 'error',
+      text1: errorMessages[error.code] || 'Error',
+      text2: error.message,
+      position: 'bottom',
+      visibilityTime: 4000,
+    });
+  };
+
+  /**
    * Main chat handling function that:
    * 1. Processes user input
    * 2. Updates chat state
@@ -128,20 +151,18 @@ export function Chat() {
     }
 
     // Validate the new message
-    const messageError = validateMessage(newMessage)
+    const messageError = validateMessage(newMessage);
     if (messageError) {
-      console.error('Message validation error:', messageError)
-      // TODO: Show error to user via toast/alert
-      return
+      showErrorToast(new ChatError(messageError.message, messageError.code));
+      return;
     }
 
     // Validate the entire conversation
-    const allMessages = [...chatState.messages, newMessage]
-    const conversationError = validateMessages(allMessages)
+    const allMessages = [...chatState.messages, newMessage];
+    const conversationError = validateMessages(allMessages);
     if (conversationError) {
-      console.error('Conversation validation error:', conversationError)
-      // TODO: Show error to user via toast/alert
-      return
+      showErrorToast(new ChatError(conversationError.message, conversationError.code));
+      return;
     }
 
     setChatState(prev => ({
@@ -207,6 +228,11 @@ export function Chat() {
           onError: (error) => {
             console.error('Chat error:', error)
             setLoading(false)
+            if (error instanceof ChatError) {
+              showErrorToast(error)
+            } else {
+              showErrorToast(new ChatError('An unexpected error occurred', 'UNKNOWN_ERROR'))
+            }
           },
           onComplete: () => {
             setLoading(false)
@@ -218,6 +244,13 @@ export function Chat() {
     } catch (error) {
       console.error('Failed to send message:', error)
       setLoading(false)
+      if (error instanceof ChatError) {
+        showErrorToast(error)
+      } else if (error instanceof Error) {
+        showErrorToast(new ChatError(error.message, 'UNKNOWN_ERROR'))
+      } else {
+        showErrorToast(new ChatError('Failed to send message', 'UNKNOWN_ERROR'))
+      }
     }
   }
 
@@ -321,6 +354,7 @@ export function Chat() {
                 placeholder='Message'
                 placeholderTextColor={theme.placeholderTextColor + '80'}
                 autoCorrect={true}
+                maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
               />
               <TouchableHighlight
                 onPress={() => {
@@ -375,32 +409,43 @@ export function Chat() {
             placeholder='Message'
             placeholderTextColor={theme.placeholderTextColor + '80'}
             value={input}
+            maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
+            editable={!loading}
           />
           <TouchableHighlight
             underlayColor={'transparent'}
             activeOpacity={0.65}
             onPress={() => {
-              animateButton(sendButtonScale)
-              chat()
+              if (!loading && input.trim()) {
+                animateButton(sendButtonScale)
+                chat()
+              }
             }}
+            disabled={loading || !input.trim()}
           >
             <Animated.View
               style={[
                 styles.chatButton,
+                loading && styles.chatButtonDisabled,
                 {
                   transform: [{ scale: sendButtonScale }]
                 }
               ]}
             >
-              <Ionicons
-                name="arrow-up-outline"
-                size={20}
-                color={theme.tintTextColor}
-              />
+              {loading ? (
+                <ActivityIndicator size="small" color={theme.tintTextColor} />
+              ) : (
+                <Ionicons
+                  name="arrow-up-outline"
+                  size={20}
+                  color={theme.tintTextColor}
+                />
+              )}
             </Animated.View>
           </TouchableHighlight>
         </View>
       )}
+      <Toast />
     </KeyboardAvoidingView>
   )
 }
@@ -544,21 +589,6 @@ const getStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.3,
   },
-  chatButton: {
-    marginRight: 14,
-    padding: 14,
-    borderRadius: 99,
-    backgroundColor: theme.tintColor,
-    shadowColor: theme.tintColor,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 5,
-    transform: [{ scale: 1.05 }],
-  },
   chatInputContainer: {
     paddingTop: 5,
     borderColor: theme.borderColor,
@@ -591,6 +621,25 @@ const getStyles = (theme: any) => StyleSheet.create({
   container: {
     backgroundColor: theme.backgroundColor,
     flex: 1
+  },
+  chatButton: {
+    marginRight: 14,
+    padding: 14,
+    borderRadius: 99,
+    backgroundColor: theme.tintColor,
+    shadowColor: theme.tintColor,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 5,
+    transform: [{ scale: 1.05 }],
+  },
+  chatButtonDisabled: {
+    backgroundColor: theme.tintColor + '50',
+    shadowOpacity: 0.1,
   },
   markdownStyle: {
     body: {
