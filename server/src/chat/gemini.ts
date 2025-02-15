@@ -1,5 +1,6 @@
 /**
  * @fileoverview Gemini chat endpoint handler implementation.
+ * @filepath src/chat/gemini.ts
  * Provides streaming chat completion functionality using Google's Gemini models.
  * 
  * @module gemini

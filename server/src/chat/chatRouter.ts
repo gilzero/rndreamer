@@ -1,5 +1,6 @@
 /**
  * @fileoverview Express router for handling chat-related endpoints.
+ * @filepath src/chat/chatRouter.ts
  * Provides routes for different AI chat providers (GPT, Claude, Gemini).
  * Includes middleware for message validation and error handling.
  * 
@@ -18,8 +19,16 @@ import { claude } from './claude'
 import { gemini } from './gemini'
 import { validateMessages } from '../config/validation'
 import { apiLimiter, gptLimiter, claudeLimiter, geminiLimiter } from '../config/rateLimit'
+import { chatService } from './chatService'
 
 const router = Router()
+
+// Expose chatService for health checks
+Object.defineProperty(router, 'chatService', {
+    value: chatService,
+    writable: false,
+    configurable: false
+});
 
 // Apply general rate limiting to all chat routes
 router.use(apiLimiter)
@@ -58,4 +67,4 @@ router.post('/gpt', gptLimiter, gpt)
 router.post('/claude', claudeLimiter, claude)
 router.post('/gemini', geminiLimiter, gemini)
 
-export default router
+export { router as default, chatService }

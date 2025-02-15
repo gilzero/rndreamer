@@ -1,5 +1,6 @@
 /**
  * @fileoverview GPT chat endpoint handler implementation.
+ * @filepath src/chat/gpt.ts
  * Provides streaming chat completion functionality using OpenAI's GPT models.
  * 
  * @module gpt
@@ -8,7 +9,7 @@
  * @requires ../services/langchainService
  */
 
-import { Request, Response, NextFunction } from "express"
+import { Request, Response } from "express"
 import asyncHandler from 'express-async-handler'
 import { langchainService } from '../services/langchainService'
 
@@ -38,7 +39,7 @@ interface RequestBody {
  * @param next - Express next function
  * @throws {Error} If message validation fails or chat completion errors occur
  */
-export const gpt = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const gpt = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   try {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',

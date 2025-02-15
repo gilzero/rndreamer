@@ -79,22 +79,22 @@ class ChatError extends Error {
  */
 const MODEL_CONFIGS: ModelConfigs = {
   gpt: {
-    default: process.env.OPENAI_MODEL_DEFAULT || 'gpt-4o',
-    fallback: process.env.OPENAI_MODEL_FALLBACK || 'gpt-4o-mini',
-    temperature: Number(process.env.OPENAI_TEMPERATURE || 0.3),
-    maxTokens: Number(process.env.OPENAI_MAX_TOKENS || 8192),
+    default: process.env['OPENAI_MODEL_DEFAULT'] || 'gpt-4o',
+    fallback: process.env['OPENAI_MODEL_FALLBACK'] || 'gpt-4o-mini',
+    temperature: Number(process.env['OPENAI_TEMPERATURE'] || 0.3),
+    maxTokens: Number(process.env['OPENAI_MAX_TOKENS'] || 8192),
   },
   claude: {
-    default: process.env.ANTHROPIC_MODEL_DEFAULT || 'claude-3-5-sonnet-latest',
-    fallback: process.env.ANTHROPIC_MODEL_FALLBACK || 'claude-3-5-haiku-latest',
-    temperature: Number(process.env.ANTHROPIC_TEMPERATURE || 0.3),
-    maxTokens: Number(process.env.ANTHROPIC_MAX_TOKENS || 8192),
+    default: process.env['ANTHROPIC_MODEL_DEFAULT'] || 'claude-3-5-sonnet-latest',
+    fallback: process.env['ANTHROPIC_MODEL_FALLBACK'] || 'claude-3-5-haiku-latest',
+    temperature: Number(process.env['ANTHROPIC_TEMPERATURE'] || 0.3),
+    maxTokens: Number(process.env['ANTHROPIC_MAX_TOKENS'] || 8192),
   },
   gemini: {
-    default: process.env.GEMINI_MODEL_DEFAULT || 'gemini-2.0-flash',
-    fallback: process.env.GEMINI_MODEL_FALLBACK || 'gemini-1.5-pro',
-    temperature: Number(process.env.GEMINI_TEMPERATURE || 0.3),
-    maxTokens: Number(process.env.GEMINI_MAX_TOKENS || 8192),
+    default: process.env['GEMINI_MODEL_DEFAULT'] || 'gemini-2.0-flash',
+    fallback: process.env['GEMINI_MODEL_FALLBACK'] || 'gemini-1.5-pro',
+    temperature: Number(process.env['GEMINI_TEMPERATURE'] || 0.3),
+    maxTokens: Number(process.env['GEMINI_MAX_TOKENS'] || 8192),
   }
 };
 
@@ -193,7 +193,7 @@ export class LangChainService {
    * @remarks Handles Anthropic-specific model initialization and error handling
    */
   private async createClaudeModel(modelName: string, temperature?: number) {
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env['ANTHROPIC_API_KEY']) {
       throw new ChatError('Anthropic API key not configured', 'claude', 500);
     }
     try {
@@ -203,7 +203,7 @@ export class LangChainService {
         temperature: temperature ?? config.temperature,
         maxTokens: config.maxTokens,
         streaming: true,
-        anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+        anthropicApiKey: process.env['ANTHROPIC_API_KEY'],
       });
       return model;
     } catch (error) {
@@ -231,7 +231,7 @@ export class LangChainService {
     try {
       switch (provider) {
         case 'gpt':
-          if (!process.env.OPENAI_API_KEY) {
+          if (!process.env['OPENAI_API_KEY']) {
             throw new ChatError('OpenAI API key not configured', 'gpt', 500);
           }
           return new ChatOpenAI({
@@ -239,12 +239,12 @@ export class LangChainService {
             temperature: temperature ?? config.temperature,
             maxTokens: config.maxTokens,
             streaming: true,
-            openAIApiKey: process.env.OPENAI_API_KEY,
+            openAIApiKey: process.env['OPENAI_API_KEY'],
           });
         case 'claude':
           return await this.createClaudeModel(modelName, temperature);
         case 'gemini':
-          if (!process.env.GEMINI_API_KEY) {
+          if (!process.env['GEMINI_API_KEY']) {
             throw new ChatError('Gemini API key not configured', 'gemini', 500);
           }
           return new ChatGoogleGenerativeAI({
@@ -252,24 +252,19 @@ export class LangChainService {
             temperature: temperature ?? config.temperature,
             maxOutputTokens: config.maxTokens,
             streaming: true,
-            apiKey: process.env.GEMINI_API_KEY,
+            apiKey: process.env['GEMINI_API_KEY'],
           });
         default:
           throw new ChatError(`Unsupported provider: ${provider}`, provider, 400);
       }
     } catch (error) {
       console.error('Model creation error:', {
+        error,
         provider,
         modelName,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        temperature
       });
-      if (error instanceof ChatError) throw error;
-      throw new ChatError(
-        `Failed to create model: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        provider,
-        500,
-        error instanceof Error ? error : undefined
-      );
+      throw error;
     }
   }
 
@@ -289,40 +284,88 @@ export class LangChainService {
   }
 
   /**
-   * Wraps an AsyncIterable stream with a timeout mechanism
-   * @param stream - Original AsyncIterable stream from the AI provider
-   * @param timeoutMs - Timeout duration in milliseconds (default: 30000)
-   * @returns Wrapped stream with timeout functionality
-   * @throws {ChatError} If stream times out or encounters errors
-   * @remarks Ensures streams don't hang indefinitely and handles timeout gracefully
+   * Wraps an async iterable stream with timeout and enhanced error handling
+   * @param stream - The async iterable to wrap
+   * @param timeoutMs - Timeout in milliseconds (default: 30000)
+   * @returns Wrapped async iterable with timeout and error handling
+   * @throws {ChatError} If stream times out or encounters specific errors
    */
   private async streamWithTimeout<T>(stream: AsyncIterable<T>, timeoutMs: number = 30000): Promise<AsyncIterable<T>> {
-    const timeout = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Stream timeout')), timeoutMs);
+    let timeoutId: NodeJS.Timeout;
+    let isDone = false;
+
+    // Create a promise that rejects after the timeout
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        if (!isDone) {
+          reject(new ChatError('Stream timeout: No response received within the time limit', 'gpt', 504));
+        }
+      }, timeoutMs);
     });
 
-    const iterator = stream[Symbol.asyncIterator]();
-    const generator = async function* () {
-      while (true) {
-        try {
-          const result = await Promise.race([
-            iterator.next(),
-            timeout
-          ]) as IteratorResult<T>;
-          
-          if (result.done) break;
-          yield result.value;
-        } catch (error) {
-          throw new ChatError(
-            error instanceof Error ? error.message : 'Stream timeout',
-            'gpt',
-            504
-          );
-        }
+    return {
+      [Symbol.asyncIterator]() {
+        const iterator = stream[Symbol.asyncIterator]();
+        
+        return {
+          async next() {
+            try {
+              // Race between getting the next value and timing out
+              const result = await Promise.race([
+                iterator.next(),
+                timeoutPromise
+              ]);
+
+              if (result.done) {
+                isDone = true;
+                clearTimeout(timeoutId);
+              }
+
+              return result;
+            } catch (error) {
+              isDone = true;
+              clearTimeout(timeoutId);
+
+              // Handle specific stream error types
+              if (error instanceof Error) {
+                if (error.message.includes('ECONNRESET') || error.message.includes('socket hang up')) {
+                  throw new ChatError('Connection reset: The stream was unexpectedly closed', 'gpt', 503);
+                }
+                if (error.message.includes('ETIMEDOUT')) {
+                  throw new ChatError('Connection timeout: Failed to establish stream connection', 'gpt', 504);
+                }
+                if (error.message.includes('rate limit')) {
+                  throw new ChatError('Rate limit exceeded: Please try again later', 'gpt', 429);
+                }
+                if (error.message.includes('authentication')) {
+                  throw new ChatError('Authentication failed: Invalid API key or credentials', 'gpt', 401);
+                }
+              }
+
+              // For unknown errors, wrap in ChatError with original error attached
+              throw new ChatError(
+                'Stream error: An unexpected error occurred while processing the stream',
+                'gpt',
+                500,
+                error instanceof Error ? error : new Error(String(error))
+              );
+            }
+          },
+          async return() {
+            isDone = true;
+            clearTimeout(timeoutId);
+            const result = await iterator.return?.();
+            return result ?? { done: true, value: undefined };
+          },
+          async throw(error?: any) {
+            isDone = true;
+            clearTimeout(timeoutId);
+            const result = await iterator.throw?.(error);
+            return result ?? { done: true, value: undefined };
+          }
+        };
       }
     };
-
-    return generator();
   }
 
   /**
