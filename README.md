@@ -207,11 +207,15 @@ Delete lock files before reinstalling dependencies.
 
 one liner command to clean install:
 
+```bash
 cd app
 rm -rf node_modules .expo dist web-build package-lock.json yarn.lock && npm install
+```
 
 Navigate to the app directory:
-
-cd app
 Install metro-config:
+
+```bash
+cd app
 npm install metro-config
+```

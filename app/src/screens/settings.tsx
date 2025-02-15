@@ -29,15 +29,16 @@ import { lightTheme, darkTheme, miami, hackerNews, vercel } from '../theme'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { useNavigation } from '@react-navigation/native'
 
 /** Array of available AI models from constants */
 const models = Object.values(MODELS)
 const themes = [
-  { name: 'Light', theme: lightTheme },
-  { name: 'Dark', theme: darkTheme },
-  { name: 'Miami', theme: miami },
-  { name: 'Hacker News', theme: hackerNews },
-  { name: 'Vercel', theme: vercel }
+  { name: 'Be Water', theme: lightTheme },
+  // { name: 'Dark', theme: darkTheme },
+  { name: 'Pink Lady', theme: miami },
+  // { name: 'Hacker News', theme: hackerNews },
+  { name: 'Yohji', theme: vercel }
 ]
 
 type DynamicStyleProps = {
@@ -73,6 +74,8 @@ type SettingsStyles = {
   hiddenSectionToggle: any;
   hiddenSectionContainer: any;
   switchTextContainer: any;
+  doneButton: any;
+  doneButtonText: any;
 }
 
 /**
@@ -94,6 +97,7 @@ export function Settings() {
   const rotateAnim = useRef(new Animated.Value(0)).current
   const lastPullY = useRef(0)
   const pullThreshold = 80 // Reduced threshold for better UX
+  const navigation = useNavigation()
 
   const currentThemeName = themes.find(t => t.theme === theme)?.name || 'Light'
 
@@ -396,6 +400,15 @@ export function Settings() {
           ))}
         </View>
       </View>
+
+      <View style={styles['sectionContainer']}>
+        <TouchableOpacity 
+          style={styles['doneButton']}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles['doneButtonText']}>Done</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   )
 }
@@ -518,7 +531,7 @@ const getStyles = (theme: IThemeContext['theme']): ReturnType<typeof StyleSheet.
     marginBottom: 20,
   },
   hiddenSectionTitle: {
-    color: theme.textColor + '90',
+    color: theme.textColor,
     fontSize: 17,
     fontFamily: theme.mediumFont,
     fontStyle: 'italic'
@@ -528,14 +541,15 @@ const getStyles = (theme: IThemeContext['theme']): ReturnType<typeof StyleSheet.
     marginRight: -8,
   },
   hiddenSettingLabel: {
-    color: theme.textColor + '90',
+    color: theme.textColor,
     fontSize: 15,
     fontFamily: theme.mediumFont,
     marginBottom: 6,
     fontStyle: 'italic'
   },
   hiddenSettingDescription: {
-    color: theme.textColor + '70',
+    color: theme.textColor,
+    opacity: 0.7,
     fontSize: 13,
     fontFamily: theme.regularFont,
     marginBottom: 12,
@@ -545,5 +559,19 @@ const getStyles = (theme: IThemeContext['theme']): ReturnType<typeof StyleSheet.
     height: 1,
     backgroundColor: theme.borderColor + '30',
     marginVertical: 8
-  }
+  },
+  doneButton: {
+    backgroundColor: theme.tintColor,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginHorizontal: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  doneButtonText: {
+    color: theme.tintTextColor,
+    fontSize: 16,
+    fontFamily: theme.mediumFont,
+  },
 })

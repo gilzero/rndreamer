@@ -372,7 +372,7 @@ export function Chat() {
                 <Ionicons
                   name="apps"
                   size={20}
-                  color={theme.textColor + '90'}
+                  color={theme.textColor}
                 />
               </View>
             </TouchableHighlight>
@@ -555,7 +555,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     paddingTop: 20
   },
   chatDescription: {
-    color: theme.textColor + '60',
+    color: theme.textColor,
+    opacity: 0.7,
     textAlign: 'center',
     marginTop: 32,
     fontSize: 15,
