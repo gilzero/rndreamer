@@ -47,7 +47,8 @@ const ThemeContext = createContext<IThemeContext>({
     semiBoldFont: '',
     lightFont: '',
     tabBarActiveTintColor: '',
-    tabBarInactiveTintColor: ''
+    tabBarInactiveTintColor: '',
+    name: ''
   },
   /** Function to update the current theme */
   setTheme: () => null,

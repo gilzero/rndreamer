@@ -11,11 +11,11 @@ import { NavigationContainer } from '@react-navigation/native'
 import { Main } from './src/main'
 import { useFonts } from 'expo-font'
 import { ThemeContext, AppContext } from './src/context'
-import { lightTheme } from './src/theme'
+import { lightTheme, darkTheme, miami, hackerNews, vercel } from './src/theme'
 import { MODELS } from './constants'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { ChatModelModal } from './src/components/index'
-import { Model, IThemeContext } from './types'
+import { Model } from './types'
 import { ActionSheetProvider } from '@expo/react-native-action-sheet'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
@@ -61,6 +61,7 @@ LogBox.ignoreLogs([
 export default function App() {
   const [chatType, setChatType] = useState<Model>(MODELS.gpt)
   const [modalVisible, setModalVisible] = useState<boolean>(false)
+  const [currentTheme, setCurrentTheme] = useState(lightTheme)
   const clearChatRef = useRef<() => void>()
   const [fontsLoaded] = useFonts({
     'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
@@ -88,13 +89,15 @@ export default function App() {
   }, [fontsLoaded])
 
   /**
-   * Loads persisted chat model selection from AsyncStorage.
-   * Restores the last used chat model when the app starts.
+   * Loads persisted chat model selection and theme from AsyncStorage.
+   * Restores the last used chat model and theme when the app starts.
    */
   async function configureStorage() {
     try {
       const _chatType = await AsyncStorage.getItem('rnai-chatType')
+      const _theme = await AsyncStorage.getItem('rnai-theme')
       if (_chatType) setChatType(JSON.parse(_chatType))
+      if (_theme) setCurrentTheme(JSON.parse(_theme))
     } catch (err) {
       console.log('error configuring storage', err)
     }
@@ -136,6 +139,16 @@ export default function App() {
   }
 
   /**
+   * Updates the current theme and persists the selection.
+   * @param {SetStateAction<typeof lightTheme>} theme - New theme or update function
+   */
+  const _setCurrentTheme = (theme: SetStateAction<typeof lightTheme>) => {
+    setCurrentTheme(theme)
+    if (theme instanceof Function) return
+    AsyncStorage.setItem('rnai-theme', JSON.stringify(theme))
+  }
+
+  /**
    * Clears the current chat conversation.
    * Uses a ref to access the clear function from child components.
    */
@@ -143,7 +156,7 @@ export default function App() {
     clearChatRef.current?.()
   }
 
-  const bottomSheetStyles = getBottomsheetStyles(lightTheme)
+  const bottomSheetStyles = getBottomsheetStyles(currentTheme)
 
   if (!fontsLoaded) return null
   return (
@@ -159,9 +172,9 @@ export default function App() {
         }}
       >
         <ThemeContext.Provider value={{
-          theme: lightTheme,
-          themeName: 'light',
-          setTheme: () => null
+          theme: currentTheme,
+          themeName: currentTheme.name,
+          setTheme: _setCurrentTheme
           }}>
           <ActionSheetProvider>
             <NavigationContainer>
@@ -197,10 +210,10 @@ export default function App() {
  * Generates styles for the bottom sheet modal components.
  * Applies theme-aware styling to the bottom sheet elements.
  * 
- * @param {IThemeContext['theme']} theme - Current theme object
+ * @param {typeof lightTheme} theme - Current theme object
  * @returns {StyleSheet} Styles for bottom sheet components
  */
-const getBottomsheetStyles = (theme: IThemeContext['theme']) => StyleSheet.create({
+const getBottomsheetStyles = (theme: typeof lightTheme) => StyleSheet.create({
   background: {
     paddingHorizontal: 24,
     backgroundColor: theme.backgroundColor

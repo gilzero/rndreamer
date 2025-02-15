@@ -51,6 +51,8 @@ export function Chat() {
   })
   /** Tracks the current connection status */
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting' | null>(null)
+  /** Animation value for fade transition */
+  const fadeAnim = useRef(new Animated.Value(1)).current
 
   // Refs and Hooks
   /** Reference for auto-scrolling the chat view */
@@ -86,12 +88,33 @@ export function Chat() {
    */
   function handleClearChat() {
     if (loading) return
-    setChatState({
-      messages: [],
-      index: uuid()
-    })
-    setInput('')
-    setCallMade(false)
+    
+    // Start fade out animation
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease)
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        delay: 100,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      })
+    ]).start()
+
+    // Reset state after slight delay to sync with animation
+    setTimeout(() => {
+      setChatState({
+        messages: [],
+        index: uuid()
+      })
+      setInput('')
+      setCallMade(false)
+    }, 200)
   }
 
   /**
@@ -398,72 +421,74 @@ export function Chat() {
           <Text style={styles.connectionStatusText}>Reconnecting...</Text>
         </View>
       )}
-      <ScrollView
-        keyboardShouldPersistTaps='handled'
-        ref={scrollViewRef}
-        contentContainerStyle={[
-          !callMade && styles.scrollContentContainer,
-          { paddingBottom: 20 }
-        ]}
-        onContentSizeChange={scrollToBottom}
-        onLayout={scrollToBottom}
-      >
-        {!callMade ? (
-          <View style={styles.midChatInputWrapper}>
-            <View style={styles.midChatInputContainer}>
-              <TextInput
-                onChangeText={setInput}
-                style={styles.midInput}
-                placeholder='Message'
-                placeholderTextColor={theme.placeholderTextColor + '80'}
-                autoCorrect={true}
-                maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
-              />
-              <TouchableHighlight
-                onPress={() => {
-                  animateButton(buttonScale)
-                  chat()
-                }}
-                underlayColor={theme.tintColor + '90'}
-                style={styles.midButtonContainer}
-              >
-                <Animated.View 
-                  style={[
-                    styles.midButtonStyle,
-                    {
-                      transform: [{ scale: buttonScale }]
-                    }
-                  ]}
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <ScrollView
+          keyboardShouldPersistTaps='handled'
+          ref={scrollViewRef}
+          contentContainerStyle={[
+            !callMade && styles.scrollContentContainer,
+            { paddingBottom: 20 }
+          ]}
+          onContentSizeChange={scrollToBottom}
+          onLayout={scrollToBottom}
+        >
+          {!callMade ? (
+            <View style={styles.midChatInputWrapper}>
+              <View style={styles.midChatInputContainer}>
+                <TextInput
+                  onChangeText={setInput}
+                  style={styles.midInput}
+                  placeholder='Message'
+                  placeholderTextColor={theme.placeholderTextColor + '80'}
+                  autoCorrect={true}
+                  maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
+                />
+                <TouchableHighlight
+                  onPress={() => {
+                    animateButton(buttonScale)
+                    chat()
+                  }}
+                  underlayColor={theme.tintColor + '90'}
+                  style={styles.midButtonContainer}
                 >
-                  <Ionicons
-                    name="chatbox-ellipses-outline"
-                    size={22}
-                    color={theme.tintTextColor}
-                    style={styles.midButtonIcon}
-                  />
-                  <Text style={styles.midButtonText}>
-                    Start {chatType.displayName} Chat
-                  </Text>
-                </Animated.View>
-              </TouchableHighlight>
-              <Text style={styles.chatDescription}>
-                It's time to prompt...
-              </Text>
+                  <Animated.View 
+                    style={[
+                      styles.midButtonStyle,
+                      {
+                        transform: [{ scale: buttonScale }]
+                      }
+                    ]}
+                  >
+                    <Ionicons
+                      name="chatbox-ellipses-outline"
+                      size={22}
+                      color={theme.tintTextColor}
+                      style={styles.midButtonIcon}
+                    />
+                    <Text style={styles.midButtonText}>
+                      Start {chatType.displayName} Chat
+                    </Text>
+                  </Animated.View>
+                </TouchableHighlight>
+                <Text style={styles.chatDescription}>
+                  It's time to prompt...
+                </Text>
+              </View>
             </View>
-          </View>
-        ) : (
-          <FlatList
-            data={chatState.messages}
-            renderItem={renderItem}
-            scrollEnabled={false}
-            keyExtractor={(_, index) => `${chatType.label}-${index}`}
-            initialNumToRender={10}
-            maxToRenderPerBatch={5}
-            windowSize={5}
-          />
-        )}
-        {loading && <ActivityIndicator style={styles.loadingContainer} />}
-      </ScrollView>
+          ) : (
+            <FlatList
+              data={chatState.messages}
+              renderItem={renderItem}
+              scrollEnabled={false}
+              keyExtractor={(_, index) => `${chatType.label}-${index}`}
+              initialNumToRender={10}
+              maxToRenderPerBatch={5}
+              windowSize={5}
+            />
+          )}
+          {loading && <ActivityIndicator style={styles.loadingContainer} />}
+        </ScrollView>
+      </Animated.View>
       {callMade && (
         <View style={styles.chatInputContainer}>
           <TextInput

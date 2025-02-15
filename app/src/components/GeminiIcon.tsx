@@ -1,11 +1,18 @@
 import Svg, { Path, G } from 'react-native-svg';
 
+interface GeminiIconProps {
+  size: number;
+  theme: any;
+  selected: boolean;
+  [key: string]: any;
+}
+
 export function GeminiIcon({
   size,
   theme,
   selected,
   ...props
-}) {
+}: GeminiIconProps) {
     const fill = selected ? theme.tintTextColor : theme.textColor
   return (
     <Svg

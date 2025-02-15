@@ -98,6 +98,8 @@ export interface IThemeContext {
     tabBarActiveTintColor: string;
     /** Inactive tab color in tab navigation */
     tabBarInactiveTintColor: string;
+    /** Theme name identifier */
+    name: string;
   };
   /** Current theme identifier */
   themeName: string;

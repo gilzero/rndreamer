@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { ThemeContext, AppContext } from '../context'
 import { MODELS } from '../../constants'
-import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
+import { View, Text, StyleSheet, TouchableHighlight, Alert, Platform } from 'react-native'
 import { Model, IThemeContext } from '../../types'
 
 interface ChatModelModalProps {
@@ -21,16 +21,18 @@ export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps)
       return
     }
 
+    // Add emoji icons for better visual cues
+    // Using emojis instead of IconComponent because Alert doesn't support custom components
     Alert.alert(
       'Switch to ' + newModel.displayName,
       'Would you like to continue with the current conversation or start a new one?',
       [
         {
-          text: 'Cancel',
+          text: '✕ Cancel',
           style: 'cancel'
         },
         {
-          text: 'New Conversation',
+          text: '🗑️ New Conversation',
           style: 'destructive',
           onPress: () => {
             setChatType(newModel)
@@ -41,7 +43,7 @@ export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps)
           }
         },
         {
-          text: 'Continue Chat',
+          text: '💬 Continue Chat',
           style: 'default',
           onPress: () => {
             setChatType(newModel)

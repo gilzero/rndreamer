@@ -151,7 +151,15 @@ function MainComponent() {
           tabBarStyle: {
             borderTopWidth: 0,
             backgroundColor: theme.backgroundColor,
+            height: 85,
+            paddingTop: 12,
+            paddingBottom: insets.bottom + 8
           },
+          tabBarLabelStyle: {
+            paddingBottom: 6,
+            fontSize: 12,
+            fontFamily: theme.mediumFont
+          }
         }}
       >
         <Tab.Screen

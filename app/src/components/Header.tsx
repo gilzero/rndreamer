@@ -2,9 +2,9 @@ import {
   StyleSheet, View, TouchableHighlight
 } from 'react-native'
 import { useContext } from 'react'
-import { Icon } from './Icon'
 import { ThemeContext, AppContext } from '../../src/context'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
 
 export function Header() {
   const { theme } = useContext(ThemeContext)
@@ -22,14 +22,18 @@ export function Header() {
         activeOpacity={0.6}
         onPress={handlePresentModalPress}
       >
-        <Ionicons
-          name="ellipsis-horizontal"
-          size={24}
+        <FontAwesome6
+          name="boxes-stacked"
+          size={22}
           color={theme.textColor}
         />
       </TouchableHighlight>
 
-      <Icon size={34} fill={theme.textColor} />
+      <FontAwesome6
+        name="dove"
+        size={28}
+        color={theme.textColor}
+      />
 
       <TouchableHighlight
         style={styles.rightButtonContainer}
