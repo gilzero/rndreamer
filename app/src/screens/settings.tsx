@@ -42,9 +42,9 @@ export function Settings() {
     type, props
   }: IIconProps) {
     const iconProps = {
-      size: props.size as number,
-      theme: props.theme,
-      selected: props.selected as boolean
+      size: props['size'] as number,
+      theme: props['theme'],
+      selected: props['selected'] as boolean
     }
     
     if (type.includes('gpt')) {
@@ -56,6 +56,7 @@ export function Settings() {
     if (type.includes('gemini')) {
       return <GeminiIcon {...iconProps} />
     }
+    return null; // Default return for unknown types
   }
 
   return (

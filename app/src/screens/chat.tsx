@@ -47,6 +47,8 @@ export function Chat() {
     messages: [],
     index: uuid()
   })
+  /** Tracks the current connection status */
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting' | null>(null)
 
   // Refs and Hooks
   /** Reference for auto-scrolling the chat view */
@@ -133,6 +135,46 @@ export function Chat() {
   };
 
   /**
+   * Shows connection status toast message
+   * @param status - Current connection status
+   */
+  const showConnectionToast = (status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting') => {
+    const statusMessages: Record<string, { text1: string; text2: string; type: string }> = {
+      'connecting': {
+        text1: 'Connecting...',
+        text2: 'Establishing connection to chat service',
+        type: 'info'
+      },
+      'connected': {
+        text1: 'Connected',
+        text2: 'Successfully connected to chat service',
+        type: 'success'
+      },
+      'disconnected': {
+        text1: 'Connection Lost',
+        text2: 'Attempting to reconnect...',
+        type: 'error'
+      },
+      'reconnecting': {
+        text1: 'Reconnecting...',
+        text2: 'Attempting to restore connection',
+        type: 'info'
+      }
+    };
+
+    const message = statusMessages[status];
+    if (message) {
+      Toast.show({
+        type: message.type as any,
+        text1: message.text1,
+        text2: message.text2,
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
+    }
+  };
+
+  /**
    * Main chat handling function that:
    * 1. Processes user input
    * 2. Updates chat state
@@ -212,7 +254,8 @@ export function Chat() {
                 messages.push({
                   role: 'assistant',
                   content: newContent,
-                  timestamp: Date.now()
+                  timestamp: Date.now(),
+                  model: chatType.displayName
                 });
               }
 
@@ -238,6 +281,10 @@ export function Chat() {
             setLoading(false)
             // Final scroll using the native scroll behavior
             scrollToBottom()
+          },
+          onConnectionStatus: (status) => {
+            setConnectionStatus(status)
+            showConnectionToast(status)
           }
         }
       )
@@ -280,6 +327,11 @@ export function Chat() {
           </View>
         ) : (
           <View style={styles.textStyleContainer}>
+            {item.model && (
+              <View style={styles.modelIndicator}>
+                <Text style={styles.modelName}>{item.model}</Text>
+              </View>
+            )}
             <Markdown style={styles.markdownStyle as any}>{item.content}</Markdown>
             <TouchableHighlight
               onPress={() => showClipboardActionsheet(item.content)}
@@ -335,6 +387,12 @@ export function Chat() {
       style={styles.container}
       keyboardVerticalOffset={110}
     >
+      {connectionStatus === 'reconnecting' && (
+        <View style={styles.connectionStatusBar}>
+          <ActivityIndicator size="small" color={theme.tintTextColor} />
+          <Text style={styles.connectionStatusText}>Reconnecting...</Text>
+        </View>
+      )}
       <ScrollView
         keyboardShouldPersistTaps='handled'
         ref={scrollViewRef}
@@ -746,4 +804,34 @@ const getStyles = (theme: any) => StyleSheet.create({
       marginVertical: 5,
     },
   } as any,
+  connectionStatusBar: {
+    backgroundColor: theme.tintColor + '90',
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  connectionStatusText: {
+    color: theme.tintTextColor,
+    marginLeft: 8,
+    fontFamily: theme.mediumFont,
+    fontSize: 14,
+  },
+  modelIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    opacity: 0.7
+  },
+  modelName: {
+    color: theme.textColor,
+    fontSize: 12,
+    fontFamily: theme.mediumFont,
+    opacity: 0.8
+  },
 })

@@ -19,11 +19,11 @@ import { Model, ModelProvider, ChatMessage } from '../types'
  */
 export const MESSAGE_LIMITS = {
   /** Maximum allowed length for a single message */
-  MAX_MESSAGE_LENGTH: Number(process.env.EXPO_PUBLIC_MAX_MESSAGE_LENGTH || 24000),
+  MAX_MESSAGE_LENGTH: Number(process.env['EXPO_PUBLIC_MAX_MESSAGE_LENGTH'] || 24000),
   /** Maximum number of messages allowed in a conversation context */
-  MAX_MESSAGES_IN_CONTEXT: Number(process.env.EXPO_PUBLIC_MAX_MESSAGES_IN_CONTEXT || 50),
+  MAX_MESSAGES_IN_CONTEXT: Number(process.env['EXPO_PUBLIC_MAX_MESSAGES_IN_CONTEXT'] || 50),
   /** Minimum required length for a message */
-  MIN_MESSAGE_LENGTH: Number(process.env.EXPO_PUBLIC_MIN_MESSAGE_LENGTH || 1)
+  MIN_MESSAGE_LENGTH: Number(process.env['EXPO_PUBLIC_MIN_MESSAGE_LENGTH'] || 1)
 } as const;
 
 /**

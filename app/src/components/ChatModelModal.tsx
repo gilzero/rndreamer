@@ -1,17 +1,56 @@
 import { useContext } from 'react'
 import { ThemeContext, AppContext } from '../context'
 import { MODELS } from '../../constants'
-import { View, Text, StyleSheet, TouchableHighlight } from 'react-native'
+import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
+import { Model, IThemeContext } from '../../types'
 
-export function ChatModelModal({ handlePresentModalPress }) {
+interface ChatModelModalProps {
+  handlePresentModalPress: () => void;
+}
+
+export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps) {
   const { theme } = useContext(ThemeContext)
-  const { setChatType, chatType } = useContext(AppContext)
+  const { setChatType, chatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme)
   const options = Object.values(MODELS)
 
-  function _setChatType(v) {
-    setChatType(v)
-    handlePresentModalPress()
+  function _setChatType(newModel: Model) {
+    // Don't show dialog if selecting the same model
+    if (newModel.label === chatType.label) {
+      handlePresentModalPress()
+      return
+    }
+
+    Alert.alert(
+      'Switch to ' + newModel.displayName,
+      'Would you like to continue with the current conversation or start a new one?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'New Conversation',
+          style: 'destructive',
+          onPress: () => {
+            setChatType(newModel)
+            if (clearChatRef.current) {
+              clearChatRef.current()
+            }
+            handlePresentModalPress()
+          }
+        },
+        {
+          text: 'Continue Chat',
+          style: 'default',
+          onPress: () => {
+            setChatType(newModel)
+            handlePresentModalPress()
+          }
+        }
+      ],
+      { cancelable: true }
+    )
   }
 
   return (
@@ -46,7 +85,7 @@ export function ChatModelModal({ handlePresentModalPress }) {
   )
 }
 
-function getStyles(theme) {
+function getStyles(theme: IThemeContext['theme']) {
   return StyleSheet.create({
     closeIconContainer: {
       position: 'absolute',
@@ -82,7 +121,7 @@ function getStyles(theme) {
   })
 }
 
-function optionContainer(theme, baseType, type) {
+function optionContainer(theme: IThemeContext['theme'], baseType: string, type: string) {
   const selected = baseType === type
   return {
     backgroundColor: selected ? theme.tintColor : theme.backgroundColor,
@@ -95,7 +134,7 @@ function optionContainer(theme, baseType, type) {
   }
 }
 
-function optionText(theme, baseType, type) {
+function optionText(theme: IThemeContext['theme'], baseType: string, type: string) {
   const selected = baseType === type
   return {
     color: selected ? theme.tintTextColor : theme.textColor,

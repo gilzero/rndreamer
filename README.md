@@ -10,6 +10,36 @@ A modern, scalable chat application that provides a unified interface for multip
 - 🛡️ Built-in rate limiting and validation
 - 🎨 Modern React Native frontend
 - 📱 Cross-platform support (iOS & Android)
+- 🔀 Metamorph™ - Smart Model Switching
+  - Seamlessly switch between AI models mid-conversation
+  - Choose to continue the current chat or start fresh
+  - Visual indicators show which model generated each response
+  - Perfect for comparing model responses or finding the best model for your task
+
+## Metamorph™ - Smart Model Switching
+
+The application features an innovative approach to switching between AI models:
+
+1. **Flexible Conversation Flow**
+   - Switch models at any time during a chat
+   - Choose between continuing the current conversation or starting fresh
+   - Preserve context when comparing different models' responses
+
+2. **Clear Visual Feedback**
+   - Each AI response is labeled with its model source
+   - Easy to track which model generated which response
+   - Helps understand model capabilities and differences
+
+3. **User-Friendly Interface**
+   - Simple model selection through a bottom sheet modal
+   - Clear confirmation dialog with multiple options
+   - Smooth transitions between models
+
+4. **Use Cases**
+   - Compare how different models handle the same prompt
+   - Find the best model for specific types of questions
+   - Seamlessly switch when one model is better suited for the current topic
+   - Educational purposes: understand different models' capabilities
 
 ## Prerequisites
 

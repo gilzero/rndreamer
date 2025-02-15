@@ -7,8 +7,8 @@
  * @see {@link ../screens/settings.tsx} for the settings interface
  */
 
-import { useContext, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { useContext } from 'react';
+import { StyleSheet, View} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Chat, Settings } from './screens'
 import { Header } from './components'

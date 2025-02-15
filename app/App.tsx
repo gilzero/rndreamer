@@ -1,6 +1,12 @@
+/**
+ * @fileoverview Root application component that sets up the global app configuration.
+ * @file-path app/App.tsx
+ * Handles theme context, navigation, font loading, and bottom sheet modal management.
+ */
+
 import 'react-native-gesture-handler'
 import './src/polyfills'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, SetStateAction } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { Main } from './src/main'
 import { useFonts } from 'expo-font'
@@ -9,7 +15,7 @@ import { lightTheme } from './src/theme'
 import { MODELS } from './constants'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { ChatModelModal } from './src/components/index'
-import { Model } from './types'
+import { Model, IThemeContext } from './types'
 import { ActionSheetProvider } from '@expo/react-native-action-sheet'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
@@ -39,6 +45,19 @@ LogBox.ignoreLogs([
   'Key "cancelled" in the image picker result is deprecated and will be removed in SDK 48, use "canceled" instead'
 ])
 
+/**
+ * Root application component that initializes the app environment.
+ * Manages global state, theme context, and navigation setup.
+ * 
+ * Features:
+ * - Font loading and splash screen management
+ * - Chat model selection and persistence
+ * - Bottom sheet modal for model selection
+ * - Theme context provider
+ * - Navigation container
+ * 
+ * @returns {JSX.Element} The root application component
+ */
 export default function App() {
   const [chatType, setChatType] = useState<Model>(MODELS.gpt)
   const [modalVisible, setModalVisible] = useState<boolean>(false)
@@ -68,6 +87,10 @@ export default function App() {
     hideSplashScreen()
   }, [fontsLoaded])
 
+  /**
+   * Loads persisted chat model selection from AsyncStorage.
+   * Restores the last used chat model when the app starts.
+   */
   async function configureStorage() {
     try {
       const _chatType = await AsyncStorage.getItem('rnai-chatType')
@@ -78,11 +101,19 @@ export default function App() {
   }
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+
+  /**
+   * Closes the bottom sheet modal and updates visibility state.
+   */
   function closeModal() {
     bottomSheetModalRef.current?.dismiss()
     setModalVisible(false)
   }
 
+  /**
+   * Toggles the bottom sheet modal visibility.
+   * Handles both showing and hiding the modal.
+   */
   function handlePresentModalPress() {
     if (modalVisible) {
       closeModal()
@@ -92,11 +123,22 @@ export default function App() {
     }
   }
 
-  function _setChatType(type) {
+  /**
+   * Updates the selected chat model and persists the selection.
+   * Handles both direct model updates and state updater functions.
+   * 
+   * @param {SetStateAction<Model>} type - New model selection or update function
+   */
+  function _setChatType(type: SetStateAction<Model>) {
     setChatType(type)
+    if (type instanceof Function) return
     AsyncStorage.setItem('rnai-chatType', JSON.stringify(type))
   }
 
+  /**
+   * Clears the current chat conversation.
+   * Uses a ref to access the clear function from child components.
+   */
   function clearChat() {
     clearChatRef.current?.()
   }
@@ -133,7 +175,7 @@ export default function App() {
                 backgroundStyle={bottomSheetStyles.background}
                 ref={bottomSheetModalRef}
                 enableDynamicSizing={true}
-                backdropComponent={(props) => <BottomSheetBackdrop {...props}  disappearsOnIndex={-1}/>}
+                backdropComponent={(props) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1}/>}
                 enableDismissOnClose
                 enablePanDownToClose
                 onDismiss={() => setModalVisible(false)}
@@ -151,7 +193,14 @@ export default function App() {
   )
 }
 
-const getBottomsheetStyles = theme => StyleSheet.create({
+/**
+ * Generates styles for the bottom sheet modal components.
+ * Applies theme-aware styling to the bottom sheet elements.
+ * 
+ * @param {IThemeContext['theme']} theme - Current theme object
+ * @returns {StyleSheet} Styles for bottom sheet components
+ */
+const getBottomsheetStyles = (theme: IThemeContext['theme']) => StyleSheet.create({
   background: {
     paddingHorizontal: 24,
     backgroundColor: theme.backgroundColor

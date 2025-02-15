@@ -37,8 +37,7 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memoryUsage: process.memoryUsage(),
-    service: 'ai-chat-app',
-    monitoring: process.env['ENABLE_DATADOG'] === 'true' ? 'datadog' : 'disabled'
+    service: 'ai-chat-app'
   });
 });
 
@@ -136,7 +135,6 @@ app.use((err: Error, req: express.Request, res: express.Response) => {
 const port = process.env['PORT'] || 3050;
 app.listen(port, () => {
   logger.info(`Server started on port ${port}`, {
-    environment: process.env['NODE_ENV'],
-    monitoring: process.env['ENABLE_DATADOG'] === 'true' ? 'datadog' : 'disabled'
+    environment: process.env['NODE_ENV']
   });
 });

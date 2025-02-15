@@ -1,7 +1,7 @@
 /**
  * @fileoverview Logging configuration for the application.
  * @filepath src/config/logger.ts
- * Provides centralized logging functionality with multiple transports (file, console, Datadog).
+ * Provides centralized logging functionality with multiple transports (file, console).
  * 
  * @module config/logger
  * @requires winston
@@ -15,12 +15,6 @@ const LOG_FILE_PATH = process.env['LOG_FILE_PATH'] || 'logs/app.log';
 
 /** Minimum level of logs to capture */
 const LOG_LEVEL = process.env['LOG_LEVEL'] || 'info';
-
-/** Datadog API key for log forwarding */
-const DATADOG_API_KEY = process.env['DATADOG_API_KEY'];
-
-/** Flag indicating whether Datadog integration is enabled */
-const DATADOG_ENABLED = process.env['ENABLE_DATADOG'] === 'true';
 
 // Ensure logs directory exists
 const logDir = path.dirname(LOG_FILE_PATH);
@@ -64,7 +58,7 @@ const structuredFormat = format.combine(
 
 /**
  * Array of configured Winston transport instances.
- * Includes file and console logging by default, with optional Datadog transport.
+ * Includes file and console logging.
  */
 const logTransports: transport[] = [
     // Always log to file
@@ -83,30 +77,6 @@ const logTransports: transport[] = [
         )
     })
 ];
-
-// Add Datadog HTTP transport if enabled
-if (DATADOG_ENABLED && DATADOG_API_KEY) {
-    console.log(chalk.green('✓ Datadog logging enabled'));
-    const datadogTransport = new transports.Http({
-        host: 'http-intake.logs.datadoghq.com',
-        path: `/api/v2/logs?dd-api-key=${DATADOG_API_KEY}&ddsource=nodejs&service=ai-chat-app`,
-        ssl: true,
-        format: structuredFormat
-    });
-
-    // Add error handler for Datadog transport
-    datadogTransport.on('error', (error) => {
-        console.error(chalk.red('Datadog transport error:'), error);
-    });
-
-    datadogTransport.on('logged', (info) => {
-        console.log(chalk.blue('✓ Successfully sent to Datadog:'), info.message);
-    });
-
-    logTransports.push(datadogTransport);
-} else {
-    console.log(chalk.yellow('⚠ Datadog logging disabled'));
-}
 
 /**
  * Configured Winston logger instance with multiple transports.
@@ -128,13 +98,6 @@ const logger = createLogger({
         service: 'ai-chat-app',
         environment: process.env['NODE_ENV'] || 'development'
     }
-});
-
-// Error handler for transports
-logTransports.forEach(transport => {
-    transport.on('error', (error) => {
-        console.error(chalk.red('Logger transport error:'), error);
-    });
 });
 
 /**
@@ -162,73 +125,7 @@ const sanitizeData = (data: any): any => {
     return data;
 };
 
-/**
- * Handles streaming response data for logging
- */
-const handleStreamingResponse = (chunks: any[]): any => {
-    if (!chunks || chunks.length === 0) return null;
-    
-    try {
-        // Filter out [DONE] messages and empty deltas
-        const validChunks = chunks
-            .filter(chunk => chunk !== '[DONE]' && chunk?.delta?.content)
-            .map(chunk => {
-                if (typeof chunk === 'string') {
-                    return JSON.parse(chunk);
-                }
-                return chunk;
-            });
-
-        // Combine all chunks into a single response
-        const combinedResponse = {
-            id: validChunks[0]?.id,
-            content: validChunks
-                .map(chunk => chunk.delta.content)
-                .join(''),
-            chunks_count: validChunks.length
-        };
-
-        return combinedResponse;
-    } catch (error) {
-        return {
-            error: 'Failed to parse streaming response',
-            raw: chunks
-        };
-    }
-};
-
-/**
- * Parses response body to ensure it's in a readable format
- */
-const parseResponseBody = (body: any): any => {
-    if (!body) return body;
-    
-    try {
-        // Handle array of chunks (streaming response)
-        if (Array.isArray(body)) {
-            return handleStreamingResponse(body);
-        }
-
-        // If body is already an object, return it
-        if (typeof body === 'object' && !Buffer.isBuffer(body)) {
-            return body;
-        }
-        
-        // If body is a string that looks like JSON, parse it
-        if (typeof body === 'string' && (body.startsWith('{') || body.startsWith('['))) {
-            return JSON.parse(body);
-        }
-        
-        // If body is a Buffer or string, convert to string
-        if (Buffer.isBuffer(body) || typeof body === 'string') {
-            return body.toString();
-        }
-        
-        return body;
-    } catch (error) {
-        return String(body);
-    }
-};
+export default logger;
 
 /**
  * Logs HTTP request information in a structured format.
@@ -269,15 +166,6 @@ export const logRequest = (req: any, res: any, duration: number, responseBody?: 
 
     // Format the log message for better readability
     const logMessage = `${req.method} ${req.originalUrl || req.url} ${res.statusCode} ${duration}ms`;
-
-    // Log to Datadog if enabled
-    if (DATADOG_ENABLED) {
-        logger.info(logMessage, logData);
-        console.log(chalk.blue('✓ Request logged to Datadog'));
-        return;
-    }
-
-    // Log to console and file only if Datadog is disabled
     logger.info(logMessage, logData);
 };
 
@@ -303,12 +191,6 @@ export const logAIRequest = (provider: string, duration: number, success: boolea
         timestamp: new Date().toISOString()
     };
 
-    if (DATADOG_ENABLED) {
-        logger.info('AI Request', logData);
-        console.log(chalk.blue(`✓ AI Request (${provider}) logged to Datadog`));
-        return;
-    }
-
     logger.info('AI Request', logData);
 };
 
@@ -330,13 +212,24 @@ export const logError = (error: Error, context?: any) => {
         timestamp: new Date().toISOString()
     };
 
-    if (DATADOG_ENABLED) {
-        logger.error('Application Error', logData);
-        console.log(chalk.red('✓ Error logged to Datadog'));
-        return;
-    }
-
     logger.error('Application Error', logData);
 };
 
-export default logger; 
+/**
+ * Helper function to parse response body data
+ * @param body - Response body to parse
+ */
+const parseResponseBody = (body: any) => {
+    if (!body) return body;
+    if (Array.isArray(body)) {
+        return {
+            chunks_count: body.length,
+            content: body.map(chunk => 
+                typeof chunk === 'object' && chunk.delta?.content 
+                    ? chunk.delta.content 
+                    : chunk
+            ).join('')
+        };
+    }
+    return body;
+}; 
