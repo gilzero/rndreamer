@@ -9,40 +9,47 @@
 import { createLogger, format, transports, transport } from 'winston';
 import path from 'path';
 import chalk from 'chalk';
+import fs from 'fs';
 
+/**
+ * Configuration constants for logging
+ */
 /** Path where log files will be stored */
 const LOG_FILE_PATH = process.env['LOG_FILE_PATH'] || 'logs/app.log';
 
 /** Minimum level of logs to capture */
 const LOG_LEVEL = process.env['LOG_LEVEL'] || 'info';
 
+/** Maximum size of each log file in MB */
+const MAX_LOG_SIZE = parseInt(process.env['MAX_LOG_SIZE'] || '10', 10);
+
+/** Maximum number of log files to keep */
+const MAX_LOG_FILES = parseInt(process.env['MAX_LOG_FILES'] || '5', 10);
+
+/** List of fields to redact in logs */
+const SENSITIVE_FIELDS = ['password', 'token', 'apiKey', 'secret', 'authorization'];
+
 // Ensure logs directory exists
 const logDir = path.dirname(LOG_FILE_PATH);
-require('fs').mkdirSync(logDir, { recursive: true });
+fs.mkdirSync(logDir, { recursive: true });
+
+/** Mapping of log levels to chalk colors */
+const levelColors = {
+    error: chalk.red,
+    warn: chalk.yellow,
+    info: chalk.blue,
+    default: chalk.white
+} as const;
 
 /**
  * Custom format for console output with colors and better readability
  */
-const consoleFormat = format.printf(({ level, message, timestamp, ...metadata }) => {
+const consoleFormat = format.printf(({ level, message, timestamp, metadata }) => {
     const ts = chalk.gray(timestamp);
-    const msg = chalk.white(message);
+    const colorize = levelColors[level as keyof typeof levelColors] || levelColors.default;
+    const metaStr = Object.keys(metadata as object || {}).length ? '\n' + JSON.stringify(metadata, null, 2) : '';
     
-    let levelColor;
-    switch(level) {
-        case 'error': levelColor = chalk.red(level); break;
-        case 'warn': levelColor = chalk.yellow(level); break;
-        case 'info': levelColor = chalk.blue(level); break;
-        default: levelColor = chalk.white(level);
-    }
-
-    // Flatten nested metadata
-    const flatMetadata = metadata['metadata'] || {};
-    let metaStr = '';
-    if (Object.keys(flatMetadata).length > 0) {
-        metaStr = '\n' + JSON.stringify(flatMetadata, null, 2);
-    }
-
-    return `${ts} [${levelColor}]: ${msg}${metaStr}`;
+    return `${ts} [${colorize(level)}]: ${chalk.white(message)}${metaStr}`;
 });
 
 /**
@@ -61,11 +68,15 @@ const structuredFormat = format.combine(
  * Includes file and console logging.
  */
 const logTransports: transport[] = [
-    // Always log to file
+    // Always log to file with rotation
     new transports.File({ 
         filename: LOG_FILE_PATH,
         level: LOG_LEVEL,
-        format: structuredFormat
+        format: structuredFormat,
+        maxsize: MAX_LOG_SIZE * 1024 * 1024, // Convert MB to bytes
+        maxFiles: MAX_LOG_FILES,
+        tailable: true,
+        zippedArchive: true
     }),
     // Console transport for development with pretty formatting
     new transports.Console({
@@ -104,25 +115,14 @@ const logger = createLogger({
  * Sanitizes sensitive data from objects before logging
  */
 const sanitizeData = (data: any): any => {
-    if (!data) return data;
+    if (!data || typeof data !== 'object') return data;
     
-    const sensitiveFields = ['password', 'token', 'apiKey', 'secret', 'authorization'];
-    
-    if (typeof data === 'object') {
-        const sanitized = Array.isArray(data) ? [...data] : { ...data };
-        
-        Object.keys(sanitized).forEach(key => {
-            if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
-                sanitized[key] = '[REDACTED]';
-            } else if (typeof sanitized[key] === 'object') {
-                sanitized[key] = sanitizeData(sanitized[key]);
-            }
-        });
-        
-        return sanitized;
-    }
-    
-    return data;
+    return Object.entries(data).reduce((acc, [key, value]) => ({
+        ...acc,
+        [key]: SENSITIVE_FIELDS.some(field => key.toLowerCase().includes(field))
+            ? '[REDACTED]'
+            : typeof value === 'object' ? sanitizeData(value) : value
+    }), Array.isArray(data) ? [] : {});
 };
 
 export default logger;
@@ -219,17 +219,28 @@ export const logError = (error: Error, context?: any) => {
  * Helper function to parse response body data
  * @param body - Response body to parse
  */
-const parseResponseBody = (body: any) => {
+const parseResponseBody = (body: any): any => {
     if (!body) return body;
+    
     if (Array.isArray(body)) {
-        return {
-            chunks_count: body.length,
-            content: body.map(chunk => 
-                typeof chunk === 'object' && chunk.delta?.content 
-                    ? chunk.delta.content 
-                    : chunk
-            ).join('')
-        };
+        try {
+            const chunks = body.map(chunk => {
+                if (chunk?.delta?.content) return chunk.delta.content;
+                if (typeof chunk === 'string') return chunk;
+                return '';
+            }).filter(Boolean);
+
+            return {
+                chunks_count: body.length,
+                content: chunks.join('')
+            };
+        } catch (error) {
+            logger.warn('Error parsing streaming response body', { error });
+            return { 
+                chunks_count: body.length,
+                content: '[Error parsing streaming response]'
+            };
+        }
     }
     return body;
 }; 
