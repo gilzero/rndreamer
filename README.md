@@ -198,12 +198,12 @@ The application implements rate limiting to prevent abuse and ensure fair usage:
 
 Use only npm. Remove Bun and Yarn.
 
-When forking the project, perform a clean install. 
-Delete the node_modules folder before reinstalling dependencies. 
-Delete the .expo folder before reinstalling dependencies. 
-Delete the dist folder before reinstalling dependencies. 
-Delete the web-build folder before reinstalling dependencies. 
-Delete lock files before reinstalling dependencies.
+When forking the project, perform a clean install:
+- Delete the node_modules folder
+- Delete the .expo folder
+- Delete the dist folder (this is regenerated during build)
+- Delete the web-build folder
+- Delete lock files
 
 one liner command to clean install:
 
@@ -309,3 +309,23 @@ npm install metro-config
 - Implement proper type safety
 - Test thoroughly before deployment
 - Update documentation
+
+
+## Curl Health Check
+```bash
+curl http://localhost:3050/health
+
+curl http://localhost:3050/health/gpt
+curl http://localhost:3050/health/claude
+curl http://localhost:3050/health/gemini
+
+curl -X POST http://localhost:3050/chat/gpt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "Hello"}],
+    "model": "gpt-4o-mini"
+  }'
+```
+
+
+

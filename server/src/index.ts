@@ -5,17 +5,17 @@
  * 
  * @module index
  * @requires express
- * @requires ./chat/chatRouter
+ * @requires ./chat/chatService
  * @requires body-parser
  * @requires dotenv/config
  */
 
 import express from 'express'
-import chatRouter, { chatService } from './chat/chatRouter'
+import chatRouter, { chatService } from './chat/chatService'
 import bodyParser from 'body-parser'
 import 'dotenv/config'
 import { requestLogger } from './middleware/requestLogger'
-import { ChatProvider } from './chat/types'
+import { ChatProvider, ChatMessage } from './chat/types'
 import logger, { logAIRequest, logError } from './config/logger'
 
 const app = express()
@@ -49,7 +49,7 @@ app.get('/health', (_req, res) => {
 app.get('/health/gpt', async (_req, res) => {
   const start = Date.now();
   try {
-    const messages = [{ role: 'user', content: 'ping' }];
+    const messages: ChatMessage[] = [{ role: 'user' as const, content: 'ping' }];
     await chatService.chat(messages, { provider: ChatProvider.GPT });
     const duration = Date.now() - start;
     logAIRequest('gpt', duration, true);
@@ -73,7 +73,7 @@ app.get('/health/gpt', async (_req, res) => {
 app.get('/health/claude', async (_req, res) => {
   const start = Date.now();
   try {
-    const messages = [{ role: 'user', content: 'ping' }];
+    const messages: ChatMessage[] = [{ role: 'user' as const, content: 'ping' }];
     await chatService.chat(messages, { provider: ChatProvider.CLAUDE });
     const duration = Date.now() - start;
     logAIRequest('claude', duration, true);
@@ -97,7 +97,7 @@ app.get('/health/claude', async (_req, res) => {
 app.get('/health/gemini', async (_req, res) => {
   const start = Date.now();
   try {
-    const messages = [{ role: 'user', content: 'ping' }];
+    const messages: ChatMessage[] = [{ role: 'user' as const, content: 'ping' }];
     await chatService.chat(messages, { provider: ChatProvider.GEMINI });
     const duration = Date.now() - start;
     logAIRequest('gemini', duration, true);

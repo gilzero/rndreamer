@@ -1,5 +1,6 @@
 /**
  * @fileoverview LangChain Service implementation for handling chat interactions with multiple AI providers.
+ * @filepath src/services/langchainService.ts
  * This service provides a unified interface for interacting with OpenAI (GPT), Anthropic (Claude),
  * and Google (Gemini) AI models through the LangChain framework.
  * 
