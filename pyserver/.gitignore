@@ -1,34 +1,14 @@
-# Virtual Environment
-venv/
-.env
-
-# Python
+# typical python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-dist/
-downloads/
-.eggs/
-lib/
-lib64/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# venv
+venv/
 
-# Logs (exclude the README.md file)
-*.log
-logs/*.log
-logs/*.txt
+# env
+.env
 

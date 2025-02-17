@@ -2,6 +2,8 @@
  * @fileoverview Utility functions and constants for chat functionality.
  * Provides message validation, text processing, and chat service helpers.
  * 
+ * @filepath: app/src/utils.ts
+ * 
  * @see {@link ../services/chatService.ts} for the main chat service implementation
  * @see {@link ../screens/chat.tsx} for the chat UI implementation
  */

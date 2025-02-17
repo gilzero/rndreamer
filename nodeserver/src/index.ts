@@ -1,157 +1,168 @@
+/**
+ * @fileoverview Main server entry point with consolidated functionality
+ */
 import express, { Request, Response, NextFunction } from 'express';
-import chatRouter, { chatService } from './chat/chatService';
 import 'dotenv/config';
-import { requestLogger } from './middleware/requestLogger';
-import { ChatProvider, ChatMessage } from './chat/types';
-import logger, { logAIRequest, logError } from './config/logger';
+import chatRouter, { chatService } from './chat';
+import { logger, logRequest } from './config';
+import { AppError, ChatProvider, HealthCheckResponse } from './types';
 
 const app = express();
 
-// Configure middleware
-app.use(requestLogger);
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ limit: '50mb' }));
+// Middleware for request logging
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const start = Date.now();
+    const chunks: any[] = [];
+    let isStreaming = false;
 
-interface AppError extends Error {
-  statusCode?: number;
-  details?: Record<string, unknown>;
-}
+    // Store original methods
+    const originalWrite = res.write;
+    const originalEnd = res.end;
 
-interface HealthCheckResponse {
-  status: 'OK' | 'ERROR';
-  provider: ChatProvider | undefined;
-  message: string | undefined;
-  metrics?: {
-    responseTime: number;
-  };
-  error?: {
-    type: string;
-    message: string;
-  };
-}
-
-const createHealthResponse = (
-  status: 'OK' | 'ERROR',
-  options: {
-    provider?: ChatProvider;
-    duration?: number;
-    error?: Error; // Always an Error object
-    message?: string;
-  }
-): HealthCheckResponse => {
-  const { provider, duration, error, message } = options;
-
-  if (status === 'ERROR') {
-    return {
-      status,
-      provider,
-      message: message ?? error?.message ?? 'An unknown error occurred',
-      ...(error && {
-        error: {
-          type: error.constructor.name,
-          message: error.message,
-        },
-      }),
+    // Override write method to capture streaming responses
+    res.write = function (chunk: any, encoding?: BufferEncoding | ((error: Error | null | undefined) => void), 
+        callback?: (error: Error | null | undefined) => void): boolean {
+        if (chunk) {
+            const strChunk = typeof chunk === 'string' ? chunk : chunk.toString();
+            if (strChunk.startsWith('data: ')) {
+                isStreaming = true;
+                const cleanChunk = strChunk.substring(6).trim();
+                if (cleanChunk !== '[DONE]') {
+                    try {
+                        const jsonChunk = JSON.parse(cleanChunk);
+                        if (jsonChunk?.delta?.content) {
+                            chunks.push(jsonChunk.delta.content);
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+        return originalWrite.call(res, chunk, encoding as BufferEncoding, callback);
     };
-  }
 
-  return {
-    status,
-    provider,
-    message: message || undefined,
-    metrics: {
-      responseTime: duration ?? 0,
-    },
-  };
+    // Override end method to log the complete request
+    res.end = function (chunk?: any, encoding?: BufferEncoding | (() => void), 
+        callback?: () => void): Response {
+        const duration = Date.now() - start;
+        const responseBody = isStreaming ? chunks.join('') : chunk;
+        logRequest(req, res, duration, responseBody);
+        return originalEnd.call(res, chunk, encoding as BufferEncoding, callback);
+    };
+
+    next();
+});
+
+// Basic middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Health check response creator
+const createHealthResponse = (
+    status: 'OK' | 'ERROR',
+    options: {
+        provider?: ChatProvider;
+        duration?: number;
+        error?: Error;
+        message?: string;
+    }
+): HealthCheckResponse => {
+    const { provider, duration, error, message } = options;
+
+    if (status === 'ERROR') {
+        return {
+            status,
+            provider,
+            message: message ?? error?.message ?? 'An unknown error occurred',
+            ...(error && {
+                error: {
+                    type: error.constructor.name,
+                    message: error.message,
+                }
+            })
+        };
+    }
+
+    return {
+        status,
+        provider,
+        message: message || undefined,
+        ...(duration && {
+            metrics: {
+                responseTime: duration
+            }
+        })
+    };
 };
 
-/**
- * Main health check endpoint.
- * @route GET /health
- * @returns {object} Overall system health status.
- */
+// Health check endpoints
 app.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json(createHealthResponse('OK', { message: 'System operational' }));
+    res.status(200).json(createHealthResponse('OK', { 
+        message: 'System operational' 
+    }));
 });
 
-/**
- * Abstracted health check for AI providers.
- */
-const providerHealthCheck = async (provider: ChatProvider, res: Response) => {
-  const start = Date.now();
-  try {
-    const messages: ChatMessage[] = [{ role: 'user', content: 'ping' }];
-    await chatService.chat(messages, { provider });
-    const duration = Date.now() - start;
-    logAIRequest(provider, duration, true); // Simpler logging
-    res.status(200).json(createHealthResponse('OK', { provider, duration }));
-  } catch (error: unknown) { // Use unknown
-    const duration = Date.now() - start;
-    const err = error instanceof Error ? error : new Error('Unknown AI provider error');
-    logAIRequest(provider, duration, false, err); // Log the Error object
-    res.status(503).json(createHealthResponse('ERROR', { provider, error: err })); // Pass the Error
-  }
-};
-
-/**
- * Generic health check endpoint for AI providers.
- * @route GET /health/:provider
- * @returns {object} Status of the specified provider.
- */
 app.get('/health/:provider', async (req: Request, res: Response) => {
-  const providerName = req.params['provider']?.toUpperCase();
+    const providerName = req.params['provider']?.toUpperCase();
+    
+    if (!providerName || !(providerName in ChatProvider)) {
+        return res.status(400).json(
+            createHealthResponse('ERROR', { 
+                message: `Invalid provider: ${providerName || 'undefined'}` 
+            })
+        );
+    }
 
-  if (!providerName || !(providerName in ChatProvider)) {
-    return res.status(400).json(
-      createHealthResponse('ERROR', { message: `Invalid provider: ${providerName || 'undefined'}` })
-    );
-  }
+    const provider = ChatProvider[providerName as keyof typeof ChatProvider];
+    const start = Date.now();
 
-  return await providerHealthCheck(
-    ChatProvider[providerName as keyof typeof ChatProvider],
-    res
-  );
-});
-
-/**
- * Health check endpoint.
- * @route GET /
- * @returns {string} Simple health check message.
- */
-app.get('/', (_req: Request, res: Response) => {
-  res.send('Hello World!');
+    try {
+        await chatService.chat(
+            [{ role: 'user', content: 'ping' }],
+            { provider }
+        );
+        const duration = Date.now() - start;
+        return res.status(200).json(createHealthResponse('OK', { provider, duration }));
+    } catch (error) {
+        const err = error instanceof Error ? error : new Error('Unknown error');
+        return res.status(503).json(createHealthResponse('ERROR', { provider, error: err }));
+    }
 });
 
 // Mount chat routes
 app.use('/chat', chatRouter);
 
-// Error handling middleware
+// Error handling
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
-    const appError: AppError = err instanceof Error ? err : new Error('An unknown error occurred');
+    const error = err instanceof Error ? err : new Error('Unknown error');
+    const appError: AppError = error;
     const statusCode = appError.statusCode || 500;
 
-    logError(appError, {
+    logger.error('Application error:', {
         path: req.path,
         method: req.method,
         statusCode,
-        ...(appError.details && { details: appError.details }), // Conditionally include details
-        headers: {
-            'user-agent': req.headers['user-agent'],
-            accept: req.headers.accept,
-        },
+        error: {
+            message: error.message,
+            stack: error.stack,
+            ...(appError.details && { details: appError.details })
+        }
     });
 
-    res.status(statusCode).json({
-        error: appError.message || 'Internal Server Error',
-        // Conditionally include details in non-production
-        ...(process.env['NODE_ENV'] !== 'production' && appError.details && { details: appError.details }),
+    return res.status(statusCode).json({
+        error: error.message || 'Internal Server Error',
+        ...(process.env['NODE_ENV'] !== 'production' && appError.details && { 
+            details: appError.details 
+        })
     });
 });
 
 // Start server
 const port = Number(process.env['PORT']) || 3050;
+const nodeEnv = process.env['NODE_ENV'];
 app.listen(port, () => {
-  logger.info(`Server started on port ${port}`, {
-    environment: process.env['NODE_ENV'],
-  });
+    logger.info(`Server started on port ${port}`, {
+        environment: nodeEnv
+    });
 });
+
+export default app;
