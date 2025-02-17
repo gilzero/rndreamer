@@ -29,5 +29,6 @@ wheels/
 
 # Logs (exclude the README.md file)
 *.log
-logs/
-!logs/README.md
+logs/*.log
+logs/*.txt
+

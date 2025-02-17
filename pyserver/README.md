@@ -1,5 +1,6 @@
 # PyServer (FastAPI)
 
+```bash
 pyserver/
 ├── app/
 │   ├── __init__.py
@@ -18,6 +19,7 @@ pyserver/
 ├── .gitignore
 ├── requirements.txt
 └── run.py
+````
 
 ## Setup
 
@@ -25,8 +27,6 @@ pyserver/
 ```bash
 python3.11 -m venv venv
 source venv/bin/activate  # Unix/macOS
-# or
-.env\Scriptsctivate  # Windows
 ```
 
 2. Install dependencies
