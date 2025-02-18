@@ -3,7 +3,7 @@
  * Supports streaming responses, message history, and UI interactions like copying and clearing chat
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -26,10 +26,17 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { ChatMessage, ChatState } from '../../types'
 import * as Clipboard from 'expo-clipboard'
 import { useActionSheet } from '@expo/react-native-action-sheet'
-import Markdown from '@ronradtke/react-native-markdown-display'
-import { chatService, ChatError } from '../services/chatService'
-import { getFirstNCharsOrLess, validateMessage, validateMessages, MESSAGE_LIMITS } from '../utils'
+import { chatService } from '../services/chatService'
+import { ChatError } from '../utils/errorUtils'
+import { 
+  validateMessage, 
+  MESSAGE_LIMITS, 
+  getFirstNCharsOrLess 
+} from '../utils/messageUtils'
 import Toast from 'react-native-toast-message'
+import { ChatMessage as ChatMessageComponent } from '../components/ChatMessage'
+import { ChatInput } from '../components/ChatInput'
+import { TypingIndicator } from '../components/TypingIndicator'
 
 /**
  * Main Chat component that provides the chat interface and handles messaging logic.
@@ -53,6 +60,14 @@ export function Chat() {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting' | null>(null)
   /** Animation value for fade transition */
   const fadeAnim = useRef(new Animated.Value(1)).current
+  /** Animation value for input loading */
+  const inputOpacity = useRef(new Animated.Value(1)).current
+  /** Controls typing indicator dots animation */
+  const typingDots = useRef<Animated.Value[]>([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0)
+  ]).current;
 
   // Refs and Hooks
   /** Reference for auto-scrolling the chat view */
@@ -215,9 +230,48 @@ export function Chat() {
 
     const newMessage = messages[messages.length - 1]!;  // Add non-null assertion
     validateMessage(newMessage);  // Validate new message
-    validateMessages(messages);  // Validate entire conversation
 
     return messages;
+  };
+
+  /**
+   * Handles input loading animation
+   * @param isLoading - Boolean indicating whether input is loading
+   */
+  const animateInputLoading = (isLoading: boolean) => {
+    Animated.timing(inputOpacity, {
+      toValue: isLoading ? 0.5 : 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  /**
+   * Animates the typing indicator dots in sequence
+   */
+  const animateTypingDots = () => {
+    const createDotAnimation = (dot: Animated.Value) => {
+      return Animated.sequence([
+        Animated.timing(dot, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dot, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        })
+      ]);
+    };
+
+    Animated.loop(
+      Animated.stagger(200, [
+        createDotAnimation(typingDots[0]!),
+        createDotAnimation(typingDots[1]!),
+        createDotAnimation(typingDots[2]!)
+      ])
+    ).start();
   };
 
   /**
@@ -250,6 +304,8 @@ export function Chat() {
 
       setLoading(true)
       setInput('')
+      animateInputLoading(true)
+      animateTypingDots() // Start typing animation
 
       // responseMap maintains the state of streaming responses for each message
       // This allows for efficient updates without re-rendering the entire message list
@@ -303,6 +359,7 @@ export function Chat() {
           onError: (error) => {
             console.error('Chat error:', error)
             setLoading(false)
+            animateInputLoading(false)
             if (error instanceof ChatError) {
               showErrorToast(error)
             } else {
@@ -311,6 +368,7 @@ export function Chat() {
           },
           onComplete: () => {
             setLoading(false)
+            animateInputLoading(false)
             // Final scroll using the native scroll behavior
             scrollToBottom()
           },
@@ -323,6 +381,7 @@ export function Chat() {
     } catch (error) {
       console.error('Failed to send message:', error)
       setLoading(false)
+      animateInputLoading(false)
       if (error instanceof ChatError) {
         showErrorToast(error)
       } else if (error instanceof Error) {
@@ -343,45 +402,13 @@ export function Chat() {
     }
   }
 
-  /**
-   * Renders individual chat messages with appropriate styling
-   * Handles both user messages and AI responses with markdown support
-   * @param item - Chat message to render
-   */
-  function renderItem({ item }: { item: ChatMessage }) {
-    return (
-      <Animated.View style={[styles.promptResponse]}>
-        {item.role === 'user' ? (
-          <View style={styles.promptTextContainer}>
-            <View style={styles.promptTextWrapper}>
-              <Text style={styles.promptText}>{item.content}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.textStyleContainer}>
-            {item.model && (
-              <View style={styles.modelIndicator}>
-                <Text style={styles.modelName}>{item.model}</Text>
-              </View>
-            )}
-            <Markdown style={styles.markdownStyle as any}>{item.content}</Markdown>
-            <TouchableHighlight
-              onPress={() => showClipboardActionsheet(item.content)}
-              underlayColor={'transparent'}
-            >
-              <View style={styles.optionsIconWrapper}>
-                <Ionicons
-                  name="apps"
-                  size={20}
-                  color={theme.textColor}
-                />
-              </View>
-            </TouchableHighlight>
-          </View>
-        )}
-      </Animated.View>
-    )
-  }
+  const renderItem = useCallback(({ item }: { item: ChatMessage }) => (
+    <ChatMessageComponent 
+      item={item} 
+      theme={theme}
+      onPressOptions={showClipboardActionsheet}
+    />
+  ), [theme, showClipboardActionsheet]);
 
   /**
    * Copies given text to clipboard
@@ -443,6 +470,9 @@ export function Chat() {
                   placeholderTextColor={theme.placeholderTextColor + '80'}
                   autoCorrect={true}
                   maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
+                  accessible={true}
+                  accessibilityLabel="Message input field"
+                  accessibilityHint="Enter your message to the AI"
                 />
                 <TouchableHighlight
                   onPress={() => {
@@ -451,6 +481,9 @@ export function Chat() {
                   }}
                   underlayColor={theme.tintColor + '90'}
                   style={styles.midButtonContainer}
+                  accessible={true}
+                  accessibilityLabel={`Start ${chatType.displayName} Chat`}
+                  accessibilityHint="Begins a new chat session with the AI"
                 >
                   <Animated.View 
                     style={[
@@ -487,52 +520,31 @@ export function Chat() {
               windowSize={5}
             />
           )}
+          {loading && (
+            <TypingIndicator 
+              theme={theme}
+              typingDots={typingDots}
+              modelDisplayName={chatType.displayName}
+            />
+          )}
           {loading && <ActivityIndicator style={styles.loadingContainer} />}
         </ScrollView>
       </Animated.View>
       {callMade && (
-        <View style={styles.chatInputContainer}>
-          <TextInput
-            style={styles.input}
-            onChangeText={setInput}
-            placeholder='Message'
-            placeholderTextColor={theme.placeholderTextColor + '80'}
-            value={input}
-            maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
-            editable={!loading}
-          />
-          <TouchableHighlight
-            underlayColor={'transparent'}
-            activeOpacity={0.65}
-            onPress={() => {
-              if (!loading && input.trim()) {
-                animateButton(sendButtonScale)
-                chat()
-              }
-            }}
-            disabled={loading || !input.trim()}
-          >
-            <Animated.View
-              style={[
-                styles.chatButton,
-                loading && styles.chatButtonDisabled,
-                {
-                  transform: [{ scale: sendButtonScale }]
-                }
-              ]}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.tintTextColor} />
-              ) : (
-                <Ionicons
-                  name="arrow-up-outline"
-                  size={20}
-                  color={theme.tintTextColor}
-                />
-              )}
-            </Animated.View>
-          </TouchableHighlight>
-        </View>
+        <ChatInput
+          input={input}
+          loading={loading}
+          theme={theme}
+          inputOpacity={inputOpacity}
+          sendButtonScale={sendButtonScale}
+          onChangeText={setInput}
+          onSend={() => {
+            if (!loading && input.trim()) {
+              animateButton(sendButtonScale);
+              chat();
+            }
+          }}
+        />
       )}
       <Toast />
     </KeyboardAvoidingView>
@@ -545,26 +557,34 @@ export function Chat() {
  * @returns StyleSheet object with all component styles
  */
 const getStyles = (theme: any) => StyleSheet.create({
-  optionsIconWrapper: {
-    padding: 12,
-    paddingTop: 10,
-    alignItems: 'flex-end',
-    opacity: 0.8
+  container: {
+    backgroundColor: theme.backgroundColor,
+    flex: 1
   },
   scrollContentContainer: {
     flex: 1,
     paddingTop: 20
   },
-  chatDescription: {
-    color: theme.textColor,
-    opacity: 0.7,
-    textAlign: 'center',
-    marginTop: 32,
-    fontSize: 15,
-    letterSpacing: 0.4,
-    paddingHorizontal: 40,
-    fontFamily: theme.regularFont,
-    lineHeight: 24,
+  loadingContainer: {
+    marginTop: 25
+  },
+  connectionStatusBar: {
+    backgroundColor: theme.tintColor + '90',
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  connectionStatusText: {
+    color: theme.tintTextColor,
+    marginLeft: 8,
+    fontFamily: theme.mediumFont,
+    fontSize: 14,
   },
   midInput: {
     marginBottom: 20,
@@ -626,244 +646,15 @@ const getStyles = (theme: any) => StyleSheet.create({
     paddingTop: 5,
     paddingBottom: 5
   },
-  loadingContainer: {
-    marginTop: 25
-  },
-  promptResponse: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  textStyleContainer: {
-    borderWidth: 1,
-    marginRight: 25,
-    borderColor: theme.borderColor + '20',
-    padding: 20,
-    paddingBottom: 10,
-    paddingTop: 10,
-    margin: 10,
-    borderRadius: 20,
-    backgroundColor: theme.backgroundColor,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  promptTextContainer: {
-    flex: 1,
-    alignItems: 'flex-end',
-    marginRight: 16,
-    marginLeft: 28,
-  },
-  promptTextWrapper: {
-    borderRadius: 20,
-    borderTopRightRadius: 4,
-    backgroundColor: theme.tintColor,
-    shadowColor: theme.tintColor,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  promptText: {
-    color: theme.tintTextColor,
-    fontFamily: theme.mediumFont,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    letterSpacing: 0.3,
-  },
-  chatInputContainer: {
-    paddingTop: 5,
-    borderColor: theme.borderColor,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: 5
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 24,
+  chatDescription: {
     color: theme.textColor,
-    marginHorizontal: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    paddingRight: 50,
-    borderColor: theme.borderColor + '30',
-    fontFamily: theme.mediumFont,
-    backgroundColor: theme.backgroundColor,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  container: {
-    backgroundColor: theme.backgroundColor,
-    flex: 1
-  },
-  chatButton: {
-    marginRight: 14,
-    padding: 14,
-    borderRadius: 99,
-    backgroundColor: theme.tintColor,
-    shadowColor: theme.tintColor,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 5,
-    transform: [{ scale: 1.05 }],
-  },
-  chatButtonDisabled: {
-    backgroundColor: theme.tintColor + '50',
-    shadowOpacity: 0.1,
-  },
-  markdownStyle: {
-    body: {
-      color: theme.textColor,
-      fontFamily: theme.regularFont
-    },
-    paragraph: {
-      color: theme.textColor,
-      fontSize: 16,
-      fontFamily: theme.regularFont
-    },
-    heading1: {
-      color: theme.textColor,
-      fontFamily: theme.semiBoldFont,
-      marginVertical: 5
-    },
-    heading2: {
-      marginTop: 20,
-      color: theme.textColor,
-      fontFamily: theme.semiBoldFont,
-      marginBottom: 5
-    },
-    heading3: {
-      marginTop: 20,
-      color: theme.textColor,
-      fontFamily: theme.mediumFont,
-      marginBottom: 5
-    },
-    heading4: {
-      marginTop: 10,
-      color: theme.textColor,
-      fontFamily: theme.mediumFont,
-      marginBottom: 5
-    },
-    heading5: {
-      marginTop: 10,
-      color: theme.textColor,
-      fontFamily: theme.mediumFont,
-      marginBottom: 5
-    },
-    heading6: {
-      color: theme.textColor,
-      fontFamily: theme.mediumFont,
-      marginVertical: 5
-    },
-    list_item: {
-      marginTop: 7,
-      color: theme.textColor,
-      fontFamily: theme.regularFont,
-      fontSize: 16,
-    },
-    ordered_list_icon: {
-      color: theme.textColor,
-      fontSize: 16,
-      fontFamily: theme.regularFont
-    },
-    bullet_list: {
-      marginTop: 10
-    },
-    ordered_list: {
-      marginTop: 7
-    },
-    bullet_list_icon: {
-      color: theme.textColor,
-      fontSize: 16,
-      fontFamily: theme.regularFont
-    },
-    code_inline: {
-      color: theme.secondaryTextColor,
-      backgroundColor: theme.secondaryBackgroundColor,
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, .1)',
-      fontFamily: theme.lightFont
-    },
-    hr: {
-      backgroundColor: 'rgba(255, 255, 255, .1)',
-      height: 1,
-    },
-    fence: {
-      marginVertical: 5,
-      padding: 10,
-      color: theme.secondaryTextColor,
-      backgroundColor: theme.secondaryBackgroundColor,
-      borderColor: 'rgba(255, 255, 255, .1)',
-      fontFamily: theme.regularFont
-    },
-    tr: {
-      borderBottomWidth: 1,
-      borderColor: 'rgba(255, 255, 255, .2)',
-      flexDirection: 'row',
-    },
-    table: {
-      marginTop: 7,
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, .2)',
-      borderRadius: 3,
-    },
-    blockquote: {
-      backgroundColor: '#312e2e',
-      borderColor: '#CCC',
-      borderLeftWidth: 4,
-      marginLeft: 5,
-      paddingHorizontal: 5,
-      marginVertical: 5,
-    },
-  } as any,
-  connectionStatusBar: {
-    backgroundColor: theme.tintColor + '90',
-    padding: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-  },
-  connectionStatusText: {
-    color: theme.tintTextColor,
-    marginLeft: 8,
-    fontFamily: theme.mediumFont,
-    fontSize: 14,
-  },
-  modelIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    opacity: 0.7
-  },
-  modelName: {
-    color: theme.textColor,
-    fontSize: 12,
-    fontFamily: theme.mediumFont,
-    opacity: 0.8
+    opacity: 0.7,
+    textAlign: 'center',
+    marginTop: 32,
+    fontSize: 15,
+    letterSpacing: 0.4,
+    paddingHorizontal: 40,
+    fontFamily: theme.regularFont,
+    lineHeight: 24,
   },
 })

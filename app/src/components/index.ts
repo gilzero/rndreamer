@@ -8,4 +8,3 @@ export * from './Icons'
 
 export { ChatModelModal } from './ChatModelModal'
 export { Header } from './Header'
-export { Icon } from './Icons'  // Only export the base Icon

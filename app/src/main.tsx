@@ -39,6 +39,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>()
  * Toast Types:
  * - success: Used for successful operations (e.g., message sent, settings saved)
  * - error: Used for error notifications (e.g., validation errors, network issues)
+ * - info: Used for neutral informational messages
  * 
  * Error Display:
  * - text1: Short error title or type (e.g., "Connection Error")
@@ -139,7 +140,48 @@ function ToastConfig({ theme }: { theme: Theme }) {
           color: theme.textColor
         }}
       />
-    )
+    ),
+    /**
+     * Info toast component with theme-aware styling.
+     * Used to display neutral informational messages.
+     * 
+     * Usage:
+     * Toast.show({
+     *   type: 'info',
+     *   text1: 'Info Title',
+     *   text2: 'Informational message details'
+     * })
+     */
+    info: (props: any) => (
+      <BaseToast
+        {...props}
+        style={{
+          borderLeftColor: '#3498db', // Info blue color
+          backgroundColor: theme.backgroundColor,
+          borderColor: theme.borderColor,
+          borderWidth: 1,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+          elevation: 4,
+        }}
+        contentContainerStyle={{ paddingHorizontal: 15 }}
+        text1Style={{
+          fontSize: 16,
+          fontFamily: theme.semiBoldFont,
+          color: theme.textColor
+        }}
+        text2Style={{
+          fontSize: 14,
+          fontFamily: theme.regularFont,
+          color: theme.textColor
+        }}
+      />
+    ),
   }
 };
 

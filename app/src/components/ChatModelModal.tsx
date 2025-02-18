@@ -34,7 +34,10 @@ export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps)
     // Using emojis instead of IconComponent because Alert doesn't support custom components
     Alert.alert(
       'Switch to ' + newModel.displayName,
-      'Would you like to continue with the current conversation or start a new one?',
+      'When switching AI models, you can either:\n\n' +
+      '• Continue with your current chat history\n' +
+      '• Start fresh with a new conversation\n\n' +
+      'What would you like to do?',
       [
         {
           text: '✕ Cancel',

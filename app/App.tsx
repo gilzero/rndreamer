@@ -34,6 +34,7 @@ import {
 } from '@gorhom/bottom-sheet'
 import { LogBox } from 'react-native'
 import { ThemeContext, AppContext } from './src/contexts/AppContexts'
+import { ErrorBoundary } from './src/components/ErrorBoundary'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -166,29 +167,30 @@ const App: React.FC = () => {
 
   if (!fontsLoaded) return null
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppContext.Provider
-        value={{
-          chatType,
-          setChatType: _setChatType,
-          handlePresentModalPress,
-          closeModal,
-          clearChat,
-          clearChatRef
-        }}
-      >
-        <ThemeContext.Provider value={{
-          theme: currentTheme,
-          themeName: currentTheme.name,
-          setTheme: _setCurrentTheme
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AppContext.Provider
+          value={{
+            chatType,
+            setChatType: _setChatType,
+            handlePresentModalPress,
+            closeModal,
+            clearChat,
+            clearChatRef
+          }}
+        >
+          <ThemeContext.Provider value={{
+            theme: currentTheme,
+            themeName: currentTheme.name,
+            setTheme: _setCurrentTheme
           }}>
-          <ActionSheetProvider>
-            <NavigationContainer>
-              <Main />
-            </NavigationContainer>
-          </ActionSheetProvider>
-          <BottomSheetModalProvider>
-            <BottomSheetModal
+            <ActionSheetProvider>
+              <NavigationContainer>
+                <Main />
+              </NavigationContainer>
+            </ActionSheetProvider>
+            <BottomSheetModalProvider>
+              <BottomSheetModal
                 handleIndicatorStyle={bottomSheetStyles.handleIndicator}
                 handleStyle={bottomSheetStyles.handle}
                 backgroundStyle={bottomSheetStyles.background}
@@ -206,9 +208,10 @@ const App: React.FC = () => {
                 </BottomSheetView>
               </BottomSheetModal>
             </BottomSheetModalProvider>
-        </ThemeContext.Provider>
-      </AppContext.Provider>
-    </GestureHandlerRootView>
+          </ThemeContext.Provider>
+        </AppContext.Provider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   )
 }
 

@@ -221,14 +221,19 @@ export function Settings() {
   function renderIcon(props: IconProps): React.ReactElement | null {
     const { type, size, theme, selected } = props
     
+    // Add type guard to ensure type is defined
+    if (!type) return null;
+    
+    // Convert size to number if it's a string
+    const iconSize = typeof size === 'string' ? parseInt(size, 10) : size;
     if (type.includes('gpt')) {
-      return <OpenAIIcon type={type} size={size} theme={theme} selected={selected || false} />
+      return <OpenAIIcon size={iconSize ?? 0} theme={theme} selected={selected || false} />
     }
     if (type.includes('claude')) {
-      return <AnthropicIcon type={type} size={size} theme={theme} selected={selected || false} />
+      return <AnthropicIcon size={iconSize ?? 0} theme={theme} selected={selected || false} />
     }
     if (type.includes('gemini')) {
-      return <GeminiIcon type={type} size={size} theme={theme} selected={selected || false} />
+      return <GeminiIcon size={iconSize ?? 0} theme={theme} selected={selected || false} />
     }
     return null;
   }

@@ -14,7 +14,7 @@
  */
 
 import { Model, ModelProvider } from './types'
-import { Icon } from './src/components/Icons'  // Use as placeholder
+import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './src/components/Icons'
 
 /**
  * API domain configuration based on environment.
@@ -32,6 +32,18 @@ import { Icon } from './src/components/Icons'  // Use as placeholder
 export const DOMAIN = process.env['EXPO_PUBLIC_ENV'] === 'DEVELOPMENT' ?
   process.env['EXPO_PUBLIC_DEV_API_URL'] :
   process.env['EXPO_PUBLIC_PROD_API_URL']
+
+/**
+ * Helper function to create model configurations
+ */
+function createModel(
+  name: string, 
+  label: ModelProvider, 
+  displayName: string, 
+  icon: React.ComponentType<any>
+): Model {
+  return { name, label, icon, displayName }
+}
 
 /**
  * AI model configurations for supported providers.
@@ -55,31 +67,10 @@ export const DOMAIN = process.env['EXPO_PUBLIC_ENV'] === 'DEVELOPMENT' ?
  * ```
  */
 export const MODELS: Record<ModelProvider, Model> = {
-  gpt: { 
-    name: 'gpt-4o',
-    label: 'gpt' as ModelProvider, 
-    icon: null,  // Set initially as null
-    displayName: 'GPT-4'
-  },
-  claude: { 
-    name: 'claude-3-5-sonnet-latest',
-    label: 'claude' as ModelProvider, 
-    icon: null,
-    displayName: 'Claude'
-  },
-  gemini: { 
-    name: 'gemini-2.0-flash',
-    label: 'gemini' as ModelProvider, 
-    icon: null,
-    displayName: 'Gemini'
-  }
+  gpt: createModel('gpt-4o', 'gpt', 'GPT-4', OpenAIIcon),
+  claude: createModel('claude-3-5-sonnet-latest', 'claude', 'Claude', AnthropicIcon),
+  gemini: createModel('gemini-2.0-flash', 'gemini', 'Gemini', GeminiIcon)
 }
-
-// Update models with icons after Icons are imported
-import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './src/components/Icons'
-MODELS.gpt.icon = OpenAIIcon
-MODELS.claude.icon = AnthropicIcon
-MODELS.gemini.icon = GeminiIcon
 
 /**
  * Theme Configuration

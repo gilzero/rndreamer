@@ -23,60 +23,59 @@ export function Header() {
 
   return (
     <View style={styles.container}>
-      <TouchableHighlight
-        style={styles.leftButtonContainer}
-        underlayColor={'transparent'}
-        activeOpacity={0.6}
-        onPress={handlePresentModalPress}
-      >
+      <View style={styles.headerContent}>
+        <TouchableHighlight
+          style={styles.button}
+          underlayColor={'transparent'}
+          activeOpacity={0.6}
+          onPress={handlePresentModalPress}
+        >
+          <FontAwesome6
+            name="boxes-stacked"
+            size={22}
+            color={theme.textColor}
+          />
+        </TouchableHighlight>
+
         <FontAwesome6
-          name="boxes-stacked"
-          size={22}
+          name="dove"
+          size={28}
           color={theme.textColor}
         />
-      </TouchableHighlight>
 
-      <FontAwesome6
-        name="dove"
-        size={28}
-        color={theme.textColor}
-      />
-
-      <TouchableHighlight
-        style={styles.rightButtonContainer}
-        underlayColor={'transparent'}
-        activeOpacity={0.6}
-        onPress={clearChat}
-      >
-        <Ionicons
-          name="add-circle-outline"
-          size={24}
-          color={theme.textColor}
-        />
-      </TouchableHighlight>
+        <TouchableHighlight
+          style={styles.button}
+          underlayColor={'transparent'}
+          activeOpacity={0.6}
+          onPress={clearChat}
+        >
+          <Ionicons
+            name="add-circle-outline"
+            size={24}
+            color={theme.textColor}
+          />
+        </TouchableHighlight>
+      </View>
     </View>
   )
 }
 
 function getStyles(theme: typeof THEMES.light) {
   return StyleSheet.create({
-    leftButtonContainer: {
-      position: 'absolute',
-      left: 15,
-      padding: 15
-    },
-    rightButtonContainer: {
-      position: 'absolute',
-      right: 15,
-      padding: 15
-    },
     container: {
-      paddingVertical: 15,
       backgroundColor: theme.backgroundColor,
-      justifyContent: 'center',
-      alignItems: 'center',
       borderBottomWidth: 1,
-      borderBottomColor: theme.borderColor
+      borderBottomColor: theme.borderColor,
+      paddingVertical: 15,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 15,
+    },
+    button: {
+      padding: 15,
     }
   })
 }
