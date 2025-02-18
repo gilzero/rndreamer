@@ -1,6 +1,13 @@
 /**
  * @fileoverview Settings screen component that allows users to select and configure AI chat models.
  * Provides a UI for switching between different AI providers (GPT, Claude, Gemini) and manages model selection state.
+ * 
+ * @filepath app/src/screens/settings.tsx
+ * 
+ * This file contains the Settings component that allows users to:
+ * - Select and switch between different AI chat models
+ * - Configure advanced settings such as temperature, max tokens, and stream response
+ * - Change the current theme of the application
  */
 
 import {
@@ -16,16 +23,16 @@ import {
   Switch,
   TouchableOpacity
 } from 'react-native'
+import { NumberProp } from 'react-native-svg'
 import React, { useContext, useState, useRef, useCallback } from 'react'
-import { AppContext, ThemeContext } from '../context'
+import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import {
   AnthropicIcon,
   OpenAIIcon,
   GeminiIcon
 } from '../components'
-import { IIconProps, IThemeContext } from '../../types'
-import { MODELS } from '../../constants'
-import { lightTheme, miami, vercel } from '../theme'
+import { IconProps } from '../../types'
+import { MODELS, THEMES } from '../../constants'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -34,17 +41,15 @@ import { useNavigation } from '@react-navigation/native'
 /** Array of available AI models from constants */
 const models = Object.values(MODELS)
 const themes = [
-  { name: 'Be Water', theme: lightTheme },
-  // { name: 'Dark', theme: darkTheme },
-  { name: 'Pink Lady', theme: miami },
-  // { name: 'Hacker News', theme: hackerNews },
-  { name: 'Yohji', theme: vercel }
+  { name: 'Be Water', theme: THEMES.light },
+  { name: 'Pink Lady', theme: THEMES.miami },
+  { name: 'Yohji', theme: THEMES.vercel }
 ]
 
 type DynamicStyleProps = {
   baseType: string;
   type: string;
-  theme: IThemeContext['theme'];
+  theme: typeof THEMES.light;
 }
 
 type StyleObject = {
@@ -210,26 +215,26 @@ export function Settings() {
 
   /**
    * Renders the appropriate icon component based on the AI model type
-   * @param {IIconProps} props - Icon properties including type and style props
+   * @param {IconProps} props - Icon properties including type and style props
    * @returns {React.ReactElement} The corresponding icon component for the AI model
    */
-  function renderIcon({ type, props }: IIconProps): React.ReactElement | null {
-    const iconProps = {
-      size: props['size'] as number,
-      theme: props['theme'],
-      selected: props['selected'] as boolean
-    }
+  function renderIcon(props: IconProps): React.ReactElement | null {
+    const { type, size, theme, selected } = props
     
     if (type.includes('gpt')) {
-      return <OpenAIIcon {...iconProps} />
+      return <OpenAIIcon type={type} size={size} theme={theme} selected={selected || false} />
     }
     if (type.includes('claude')) {
-      return <AnthropicIcon {...iconProps} />
+      return <AnthropicIcon type={type} size={size} theme={theme} selected={selected || false} />
     }
     if (type.includes('gemini')) {
-      return <GeminiIcon {...iconProps} />
+      return <GeminiIcon type={type} size={size} theme={theme} selected={selected || false} />
     }
-    return null; // Default return for unknown types
+    return null;
+  }
+
+  const handleThemeChange = (newTheme: typeof THEMES.light) => {
+    setTheme(newTheme)
   }
 
   return (
@@ -342,13 +347,10 @@ export function Settings() {
                   style={{...styles['chatChoiceButton'], ...getDynamicViewStyle({ baseType: chatType.label, type: model.label, theme } as DynamicStyleProps)}}
                 >
                   {renderIcon({
+                    theme,
                     type: model.label,
-                    props: {
-                      theme,
-                      size: 18,
-                      style: {marginRight: 8},
-                      selected: chatType.label === model.label
-                    }
+                    size: 18 as NumberProp,
+                    selected: chatType.label === model.label || false
                   })}
                   <Text
                     style={{...styles['chatTypeText'], ...getDynamicTextStyle({ baseType: chatType.label, type: model.label, theme } as DynamicStyleProps)}}
@@ -371,7 +373,7 @@ export function Settings() {
             <TouchableHighlight
               key={index}
               underlayColor='transparent'
-              onPress={() => setTheme(themeOption.theme)}
+              onPress={() => handleThemeChange(themeOption.theme)}
             >
               <View
                 style={{
@@ -444,7 +446,7 @@ function getDynamicViewStyle({ baseType, type, theme }: DynamicStyleProps): Styl
  * @param {IThemeContext['theme']} theme - Current theme object containing colors and fonts
  * @returns {StyleSheet} StyleSheet object with component styles
  */
-const getStyles = (theme: IThemeContext['theme']): ReturnType<typeof StyleSheet.create> => StyleSheet.create({
+const getStyles = (theme: typeof THEMES.light): ReturnType<typeof StyleSheet.create> => StyleSheet.create({
   contentContainer: {
     paddingBottom: 50
   },

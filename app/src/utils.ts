@@ -45,21 +45,26 @@ export function getEventSource({
   headers,
   body,
   type
-} : {
-  headers?: any,
-  body: any,
+}: {
+  headers?: Record<string, string>,
+  body: unknown,
   type: string
-}) {
-  const es = new EventSource(`${DOMAIN}/chat/${type}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers
-    },
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
-
-  return es;
+}): EventSource {
+  try {
+    return new EventSource(`${DOMAIN}/chat/${type}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to create EventSource: ${error.message}`);
+    }
+    throw new Error('Failed to create EventSource: Unknown error');
+  }
 }
 
 /**
@@ -148,6 +153,19 @@ export interface MessageValidationError {
 }
 
 /**
+ * Add stronger typing for chat errors
+ */
+export class ChatValidationError extends Error {
+  constructor(
+    public code: MessageValidationError['code'],
+    message: string
+  ) {
+    super(message);
+    this.name = 'ChatValidationError';
+  }
+}
+
+/**
  * Validates a single chat message against defined constraints.
  * Used before sending messages to ensure they meet requirements.
  * 
@@ -157,34 +175,32 @@ export interface MessageValidationError {
  * - Invalid role: Returns INVALID_ROLE error
  * 
  * @param {ChatMessage} message - Message to validate
- * @returns {MessageValidationError | null} Validation error if any, null if valid
+ * @returns {void} Throws ChatValidationError if any error is found
  * 
  * @see {@link ../screens/chat.tsx} for validation before sending messages
  * @see {@link MessageValidationError} for error types
  */
-export function validateMessage(message: ChatMessage): MessageValidationError | null {
+export function validateMessage(message: ChatMessage): void {
   if (!message.content?.trim()) {
-    return {
-      message: 'Message content cannot be empty',
-      code: 'EMPTY_MESSAGE'
-    };
+    throw new ChatValidationError(
+      'EMPTY_MESSAGE',
+      'Message content cannot be empty'
+    );
   }
 
   if (message.content.length > MESSAGE_LIMITS.MAX_MESSAGE_LENGTH) {
-    return {
-      message: `Message exceeds maximum length of ${MESSAGE_LIMITS.MAX_MESSAGE_LENGTH} characters`,
-      code: 'MESSAGE_TOO_LONG'
-    };
+    throw new ChatValidationError(
+      'MESSAGE_TOO_LONG',
+      `Message exceeds maximum length of ${MESSAGE_LIMITS.MAX_MESSAGE_LENGTH} characters`
+    );
   }
 
   if (!['user', 'assistant', 'system'].includes(message.role)) {
-    return {
-      message: 'Invalid message role',
-      code: 'INVALID_ROLE'
-    };
+    throw new ChatValidationError(
+      'INVALID_ROLE',
+      'Invalid message role'
+    );
   }
-
-  return null;
 }
 
 /**
@@ -211,8 +227,7 @@ export function validateMessages(messages: ChatMessage[]): MessageValidationErro
   }
 
   for (const message of messages) {
-    const error = validateMessage(message);
-    if (error) return error;
+    validateMessage(message);
   }
 
   return null;

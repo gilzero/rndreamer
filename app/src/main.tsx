@@ -4,7 +4,7 @@
  *
  * @filepath app/src/main.tsx
  *
- * @see {@link ../context.tsx} for theme and app-wide state management
+ * @see {@link ../App.tsx} for theme and app-wide state management
  * @see {@link ../screens/chat.tsx} for the main chat interface
  * @see {@link ../screens/settings.tsx} for the settings interface
  */
@@ -19,10 +19,18 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
-import { ThemeContext } from './context'
+import { ThemeContext } from './contexts/AppContexts'
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import { ParamListBase } from '@react-navigation/native';
+import { Theme } from '../types'
 
-const Tab = createBottomTabNavigator()
+type RootTabParamList = ParamListBase & {
+  'AI Chat': undefined;
+  'AI Agent': undefined;
+  'Settings': undefined;
+};
+
+const Tab = createBottomTabNavigator<RootTabParamList>()
 
 /**
  * Generates theme-aware toast configurations for the application.
@@ -42,7 +50,7 @@ const Tab = createBottomTabNavigator()
  * @see {@link ../services/chatService.ts} for error generation
  * @see {@link ../utils.ts} for validation error types
  */
-function ToastConfig({ theme }: { theme: any }) {
+function ToastConfig({ theme }: { theme: Theme }) {
   return {
     /**
      * Success toast component with theme-aware styling.
@@ -147,28 +155,12 @@ function MainComponent() {
   return (
     <View style={styles.container}>
       <Tab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: theme.tabBarActiveTintColor,
-          tabBarInactiveTintColor: theme.tabBarInactiveTintColor,
-          tabBarStyle: {
-            borderTopWidth: 0,
-            backgroundColor: theme.backgroundColor,
-            height: 85,
-            paddingTop: 12,
-            paddingBottom: insets.bottom + 8
-          },
-          tabBarLabelStyle: {
-            paddingBottom: 6,
-            fontSize: 12,
-            fontFamily: theme.mediumFont
-          }
-        }}
+        screenOptions={getTabScreenOptions(theme)}
       >
         <Tab.Screen
           name="AI Chat"
           component={Chat}
           options={{
-            header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
               <FeatherIcon
                 name="message-circle"
@@ -182,7 +174,6 @@ function MainComponent() {
           name="AI Agent"
           component={Agent}
           options={{
-            header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
               <FeatherIcon
                 name="cpu"
@@ -196,7 +187,6 @@ function MainComponent() {
           name="Settings"
           component={Settings}
           options={{
-            header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
               <FeatherIcon
                 name="sliders"
@@ -242,3 +232,30 @@ const getStyles = ({ theme, insets } : { theme: any, insets: any}) => StyleSheet
     paddingRight: insets.right,
   },
 })
+
+/**
+ * Extracts tab screen options to reduce duplication
+ * 
+ * @param {Theme} theme - Current theme object containing colors and styling properties
+ * @returns {object} Tab screen options object
+ */
+const getTabScreenOptions = (theme: Theme) => {
+  const insets = useSafeAreaInsets()
+  return {
+    tabBarActiveTintColor: theme.tabBarActiveTintColor,
+    tabBarInactiveTintColor: theme.tabBarInactiveTintColor,
+    tabBarStyle: {
+      borderTopWidth: 0,
+      backgroundColor: theme.backgroundColor,
+      height: 85,
+      paddingTop: 12,
+      paddingBottom: insets.bottom + 8
+    },
+    tabBarLabelStyle: {
+      paddingBottom: 6,
+      fontSize: 12,
+      fontFamily: theme.mediumFont
+    },
+    header: () => <Header />
+  }
+}

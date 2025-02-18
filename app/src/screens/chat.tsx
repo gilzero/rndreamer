@@ -20,15 +20,15 @@ import {
 } from 'react-native'
 import 'react-native-get-random-values'
 import { useContext, useState, useRef } from 'react'
-import { ThemeContext, AppContext } from '../context'
+import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import { v4 as uuid } from 'uuid'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { ChatMessage, ChatState, ModelProvider } from '../../types'
+import { ChatMessage, ChatState } from '../../types'
 import * as Clipboard from 'expo-clipboard'
 import { useActionSheet } from '@expo/react-native-action-sheet'
 import Markdown from '@ronradtke/react-native-markdown-display'
 import { chatService, ChatError } from '../services/chatService'
-import { getFirstNCharsOrLess, validateMessage, validateMessages, MessageValidationError, MESSAGE_LIMITS } from '../utils'
+import { getFirstNCharsOrLess, validateMessage, validateMessages, MESSAGE_LIMITS } from '../utils'
 import Toast from 'react-native-toast-message'
 
 /**
@@ -201,6 +201,26 @@ export function Chat() {
   };
 
   /**
+   * Extract message validation logic
+   * @param input - User input text
+   * @param chatState - Current chat state
+   * @returns - Validated message and all messages
+   */
+  const validateAndPrepareMessage = (input: string, chatState: ChatState) => {
+    const messages = [...chatState.messages, {
+      role: 'user' as const,
+      content: getFirstNCharsOrLess(input),
+      timestamp: Date.now()
+    }];
+
+    const newMessage = messages[messages.length - 1]!;  // Add non-null assertion
+    validateMessage(newMessage);  // Validate new message
+    validateMessages(messages);  // Validate entire conversation
+
+    return messages;
+  };
+
+  /**
    * Main chat handling function that:
    * 1. Processes user input
    * 2. Updates chat state
@@ -217,46 +237,27 @@ export function Chat() {
       setCallMade(true)
     }
 
-    const newMessage: ChatMessage = {
-      role: 'user',
-      content: getFirstNCharsOrLess(input),
-      timestamp: Date.now()
-    }
-
-    // Validate the new message
-    const messageError = validateMessage(newMessage);
-    if (messageError) {
-      showErrorToast(new ChatError(messageError.message, messageError.code));
-      return;
-    }
-
-    // Validate the entire conversation
-    const allMessages = [...chatState.messages, newMessage];
-    const conversationError = validateMessages(allMessages);
-    if (conversationError) {
-      showErrorToast(new ChatError(conversationError.message, conversationError.code));
-      return;
-    }
-
-    setChatState(prev => ({
-      ...prev,
-      messages: allMessages
-    }))
-
-    // Scroll to bottom after user message using the native scroll behavior
-    scrollToBottom()
-
-    setLoading(true)
-    setInput('')
-
-    // responseMap maintains the state of streaming responses for each message
-    // This allows for efficient updates without re-rendering the entire message list
-    // Each messageId maps to its accumulated content as tokens arrive
-    const responseMap = new Map<string, string>();
-
     try {
+      const messages = validateAndPrepareMessage(input, chatState);
+      
+      setChatState(prev => ({
+        ...prev,
+        messages
+      }));
+
+      // Scroll to bottom after user message using the native scroll behavior
+      scrollToBottom()
+
+      setLoading(true)
+      setInput('')
+
+      // responseMap maintains the state of streaming responses for each message
+      // This allows for efficient updates without re-rendering the entire message list
+      // Each messageId maps to its accumulated content as tokens arrive
+      const responseMap = new Map<string, string>();
+
       await chatService.streamChat(
-        [...chatState.messages, newMessage],
+        messages,
         {
           provider: chatType.label,
           model: chatType.name,

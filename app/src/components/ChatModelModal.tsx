@@ -1,9 +1,17 @@
 // filepath: app/src/components/ChatModelModal.tsx
+/**
+ * Modal component for selecting AI chat models.
+ * Provides a bottom sheet interface for switching between different AI providers.
+ * 
+ * @see {@link ../../App.tsx} for context providers
+ * @see {@link ../../constants.ts} for model definitions
+ */
 import { useContext } from 'react'
-import { ThemeContext, AppContext } from '../context'
+import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import { MODELS } from '../../constants'
 import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
-import { Model, IThemeContext } from '../../types'
+import { Model } from '../../types'
+import { THEMES } from '../../constants'
 
 interface ChatModelModalProps {
   handlePresentModalPress: () => void;
@@ -71,11 +79,13 @@ export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps)
               onPress={() => _setChatType(option)}
               key={index}>
               <View style={optionContainer(theme, chatType.label, option.label)}>
-                <option.icon
-                 size={20}
-                 theme={theme}
-                 selected={chatType.label === option.label}
-                />
+                {option.icon && (
+                  <option.icon
+                    size={20}
+                    theme={theme}
+                    selected={chatType.label === option.label}
+                  />
+                )}
                 <Text style={optionText(theme, chatType.label, option.label)}>
                   {option.displayName}
                 </Text>
@@ -88,7 +98,7 @@ export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps)
   )
 }
 
-function getStyles(theme: IThemeContext['theme']) {
+function getStyles(theme: typeof THEMES.light) {
   return StyleSheet.create({
     closeIconContainer: {
       position: 'absolute',
@@ -124,7 +134,7 @@ function getStyles(theme: IThemeContext['theme']) {
   })
 }
 
-function optionContainer(theme: IThemeContext['theme'], baseType: string, type: string) {
+function optionContainer(theme: typeof THEMES.light, baseType: string, type: string) {
   const selected = baseType === type
   return {
     backgroundColor: selected ? theme.tintColor : theme.backgroundColor,
@@ -137,7 +147,7 @@ function optionContainer(theme: IThemeContext['theme'], baseType: string, type: 
   }
 }
 
-function optionText(theme: IThemeContext['theme'], baseType: string, type: string) {
+function optionText(theme: typeof THEMES.light, baseType: string, type: string) {
   const selected = baseType === type
   return {
     color: selected ? theme.tintTextColor : theme.textColor,

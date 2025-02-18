@@ -1,11 +1,17 @@
 // filepath: app/src/components/Header.tsx
+/**
+ * Application header component with navigation and action buttons.
+ * 
+ * @see {@link ../../App.tsx} for theme and app context
+ */
 import {
   StyleSheet, View, TouchableHighlight
 } from 'react-native'
 import { useContext } from 'react'
-import { ThemeContext, AppContext } from '../context'
+import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
+import { THEMES } from '../../constants'
 
 export function Header() {
   const { theme } = useContext(ThemeContext)
@@ -52,7 +58,7 @@ export function Header() {
   )
 }
 
-function getStyles(theme:any) {
+function getStyles(theme: typeof THEMES.light) {
   return StyleSheet.create({
     leftButtonContainer: {
       position: 'absolute',

@@ -1,7 +1,16 @@
 /**
  * @fileoverview Root application component that sets up the global app configuration.
- * @file-path app/App.tsx
- * Handles theme context, navigation, font loading, and bottom sheet modal management.
+ * @filepath app/App.tsx
+ * 
+ * Handles:
+ * - Theme context and provider
+ * - App-wide context and provider
+ * - Navigation setup
+ * - Font loading
+ * - Bottom sheet modal management
+ * 
+ * @see {@link ./constants.ts} for theme definitions
+ * @see {@link ./types.ts} for type definitions
  */
 
 import 'react-native-gesture-handler'
@@ -10,12 +19,10 @@ import { useState, useEffect, useRef, SetStateAction } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { Main } from './src/main'
 import { useFonts } from 'expo-font'
-import { ThemeContext, AppContext } from './src/context'
-import { lightTheme, darkTheme, miami, hackerNews, vercel } from './src/theme'
-import { MODELS } from './constants'
+import { Model } from './types'
+import { MODELS, THEMES, FONTS, STORAGE_KEYS, getBottomSheetStyles } from './constants'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { ChatModelModal } from './src/components/index'
-import { Model } from './types'
 import { ActionSheetProvider } from '@expo/react-native-action-sheet'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
@@ -25,7 +32,8 @@ import {
   BottomSheetModalProvider,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { StyleSheet, LogBox } from 'react-native'
+import { LogBox } from 'react-native'
+import { ThemeContext, AppContext } from './src/contexts/AppContexts'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -46,6 +54,35 @@ LogBox.ignoreLogs([
 ])
 
 /**
+ * Extract context initialization logic
+ * @returns {Object} - An object containing chatType, setChatType, currentTheme, and setCurrentTheme
+ */
+const useAppConfiguration = () => {
+  const [chatType, setChatType] = useState<Model>(MODELS.gpt);
+  const [currentTheme, setCurrentTheme] = useState(THEMES.light);
+  
+  useEffect(() => {
+    async function loadConfiguration() {
+      try {
+        const [savedChatType, savedTheme] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.CHAT_TYPE),
+          AsyncStorage.getItem(STORAGE_KEYS.THEME)
+        ]);
+        
+        if (savedChatType) setChatType(JSON.parse(savedChatType));
+        if (savedTheme) setCurrentTheme(JSON.parse(savedTheme));
+      } catch (err) {
+        console.error('Failed to load configuration:', err);
+      }
+    }
+    
+    loadConfiguration();
+  }, []);
+
+  return { chatType, setChatType, currentTheme, setCurrentTheme };
+};
+
+/**
  * Root application component that initializes the app environment.
  * Manages global state, theme context, and navigation setup.
  * 
@@ -58,26 +95,11 @@ LogBox.ignoreLogs([
  * 
  * @returns {JSX.Element} The root application component
  */
-export default function App() {
-  const [chatType, setChatType] = useState<Model>(MODELS.gpt)
+const App: React.FC = () => {
+  const { chatType, setChatType, currentTheme, setCurrentTheme } = useAppConfiguration();
   const [modalVisible, setModalVisible] = useState<boolean>(false)
-  const [currentTheme, setCurrentTheme] = useState(lightTheme)
   const clearChatRef = useRef<() => void>()
-  const [fontsLoaded] = useFonts({
-    'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
-    'Geist-Light': require('./assets/fonts/Geist-Light.otf'),
-    'Geist-Bold': require('./assets/fonts/Geist-Bold.otf'),
-    'Geist-Medium': require('./assets/fonts/Geist-Medium.otf'),
-    'Geist-Black': require('./assets/fonts/Geist-Black.otf'),
-    'Geist-SemiBold': require('./assets/fonts/Geist-SemiBold.otf'),
-    'Geist-Thin': require('./assets/fonts/Geist-Thin.otf'),
-    'Geist-UltraLight': require('./assets/fonts/Geist-UltraLight.otf'),
-    'Geist-UltraBlack': require('./assets/fonts/Geist-UltraBlack.otf')
-  })
-
-  useEffect(() => {
-    configureStorage()
-  }, [])
+  const [fontsLoaded] = useFonts(FONTS)
 
   useEffect(() => {
     async function hideSplashScreen() {
@@ -87,21 +109,6 @@ export default function App() {
     }
     hideSplashScreen()
   }, [fontsLoaded])
-
-  /**
-   * Loads persisted chat model selection and theme from AsyncStorage.
-   * Restores the last used chat model and theme when the app starts.
-   */
-  async function configureStorage() {
-    try {
-      const _chatType = await AsyncStorage.getItem('rnai-chatType')
-      const _theme = await AsyncStorage.getItem('rnai-theme')
-      if (_chatType) setChatType(JSON.parse(_chatType))
-      if (_theme) setCurrentTheme(JSON.parse(_theme))
-    } catch (err) {
-      console.log('error configuring storage', err)
-    }
-  }
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
 
@@ -135,17 +142,16 @@ export default function App() {
   function _setChatType(type: SetStateAction<Model>) {
     setChatType(type)
     if (type instanceof Function) return
-    AsyncStorage.setItem('rnai-chatType', JSON.stringify(type))
+    AsyncStorage.setItem(STORAGE_KEYS.CHAT_TYPE, JSON.stringify(type))
   }
 
   /**
    * Updates the current theme and persists the selection.
-   * @param {SetStateAction<typeof lightTheme>} theme - New theme or update function
    */
-  const _setCurrentTheme = (theme: SetStateAction<typeof lightTheme>) => {
+  const _setCurrentTheme = (theme: SetStateAction<typeof THEMES.light>) => {
     setCurrentTheme(theme)
     if (theme instanceof Function) return
-    AsyncStorage.setItem('rnai-theme', JSON.stringify(theme))
+    AsyncStorage.setItem(STORAGE_KEYS.THEME, JSON.stringify(theme))
   }
 
   /**
@@ -156,7 +162,7 @@ export default function App() {
     clearChatRef.current?.()
   }
 
-  const bottomSheetStyles = getBottomsheetStyles(currentTheme)
+  const bottomSheetStyles = getBottomSheetStyles(currentTheme)
 
   if (!fontsLoaded) return null
   return (
@@ -206,25 +212,4 @@ export default function App() {
   )
 }
 
-/**
- * Generates styles for the bottom sheet modal components.
- * Applies theme-aware styling to the bottom sheet elements.
- * 
- * @param {typeof lightTheme} theme - Current theme object
- * @returns {StyleSheet} Styles for bottom sheet components
- */
-const getBottomsheetStyles = (theme: typeof lightTheme) => StyleSheet.create({
-  background: {
-    paddingHorizontal: 24,
-    backgroundColor: theme.backgroundColor
-  },
-  handle: {
-    marginHorizontal: 15,
-    backgroundColor: theme.backgroundColor,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  handleIndicator: {
-    backgroundColor: 'rgba(255, 255, 255, .3)'
-  }
-})
+export default App
