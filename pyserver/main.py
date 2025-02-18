@@ -76,6 +76,16 @@ CLAUDE_RATE_LIMIT_MAX=os.getenv("CLAUDE_RATE_LIMIT_MAX")
 GEMINI_RATE_LIMIT_MAX=os.getenv("GEMINI_RATE_LIMIT_MAX")
 GROQ_RATE_LIMIT_MAX=os.getenv("GROQ_RATE_LIMIT_MAX")
 
+# System Prompts for each provider
+GPT_SYSTEM_PROMPT = os.getenv("GPT_SYSTEM_PROMPT", 
+    "You are ChatGPT, a helpful AI assistant that provides accurate and informative responses.")
+
+CLAUDE_SYSTEM_PROMPT = os.getenv("CLAUDE_SYSTEM_PROMPT", 
+    "You are Claude, a highly capable AI assistant created by Anthropic, focused on providing accurate, nuanced, and helpful responses.")
+
+GEMINI_SYSTEM_PROMPT = os.getenv("GEMINI_SYSTEM_PROMPT", 
+    "You are Gemini, a helpful and capable AI assistant created by Google, focused on providing clear and accurate responses.")
+
 # Create logs directory if it doesn't exist
 log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
@@ -290,17 +300,29 @@ async def simulate_stream_response(message: str) -> str:
         yield word + " "
         await asyncio.sleep(0.1)  # Simulate network delay
 
+# Add helper function before stream_response
+def get_system_prompt(messages: List[ChatMessage]) -> str:
+    """Get system prompt from messages or use default"""
+    system_messages = [msg.content for msg in messages if msg.role == "system"]
+    return " ".join(system_messages) if system_messages else GPT_SYSTEM_PROMPT
+
 # Update the stream_response function
 async def stream_response(request: ChatRequest, provider: str):
     message_id = f"{provider}-{int(time.time()*1000)}"
     start_time = time.time()
     
     try:
+        # Get unified system prompt
+        system_prompt = get_system_prompt(request.messages)
+        
         if provider == "gpt":
-            # OpenAI streaming implementation
+            messages = [{"role": "system", "content": GPT_SYSTEM_PROMPT}] + [
+                {"role": m.role, "content": m.content} 
+                for m in request.messages if m.role != "system"
+            ]
             stream = client.chat.completions.create(
                 model=request.model,
-                messages=[{"role": m.role, "content": m.content} for m in request.messages],
+                messages=messages,
                 stream=True,
                 temperature=float(OPENAI_TEMPERATURE or 0.7),
                 max_tokens=int(OPENAI_MAX_TOKENS or 2000),
@@ -314,12 +336,16 @@ async def stream_response(request: ChatRequest, provider: str):
                     }
                     yield f"data: {json.dumps(data)}\n\n"
         elif provider == "claude":
-            # Claude streaming implementation
+            messages = [
+                {"role": m.role, "content": m.content}
+                for m in request.messages if m.role != "system"
+            ]
             with anthropic_client.messages.stream(
                 model=request.model,
+                messages=messages,
+                system=CLAUDE_SYSTEM_PROMPT,  # Use Claude-specific prompt
                 max_tokens=int(ANTHROPIC_MAX_TOKENS or 2000),
                 temperature=float(ANTHROPIC_TEMPERATURE or 0.7),
-                messages=[{"role": m.role, "content": m.content} for m in request.messages]
             ) as stream:
                 for text in stream.text_stream:
                     data = {
@@ -328,23 +354,38 @@ async def stream_response(request: ChatRequest, provider: str):
                     }
                     yield f"data: {json.dumps(data)}\n\n"
         elif provider == "gemini":
-            # Gemini streaming implementation
-            response = genai_client.models.generate_content_stream(
-                model=request.model,
-                contents=[msg.content for msg in request.messages if msg.role == "user"],
-                config=types.GenerateContentConfig(
+            try:
+                config = types.GenerateContentConfig(
                     temperature=float(GEMINI_TEMPERATURE or 0.7),
                     max_output_tokens=int(GEMINI_MAX_TOKENS or 2000),
+                    system_instruction=GEMINI_SYSTEM_PROMPT  # Use Gemini-specific prompt
                 )
-            )
-            
-            for chunk in response:
-                if chunk.text:
-                    data = {
-                        "id": message_id,
-                        "delta": {"content": chunk.text}
-                    }
-                    yield f"data: {json.dumps(data)}\n\n"
+
+                # Extract all non-system messages in order
+                chat_messages = []
+                for msg in request.messages:
+                    if msg.role != "system":
+                        chat_messages.append(msg.content)
+
+                # Use streaming content generation
+                response = genai_client.models.generate_content_stream(
+                    model=request.model,
+                    contents=chat_messages,  # Pass the conversation history
+                    config=config
+                )
+
+                # Stream the response
+                for chunk in response:
+                    if chunk.text:
+                        data = {
+                            "id": message_id,
+                            "delta": {"content": chunk.text}
+                        }
+                        yield f"data: {json.dumps(data)}\n\n"
+
+            except Exception as e:
+                logger.error(f"Gemini error: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Gemini error: {str(e)}")
         else:
             # Keep simulation for other providers
             async for token in simulate_stream_response(request.messages[-1].content):
@@ -389,7 +430,7 @@ async def chat(provider: str, request: ChatRequest):
             "model": request.model,
             "message_count": len(request.messages),
             "total_input_length": sum(len(msg.content) for msg in request.messages),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
         logger.info(f"Chat request metadata:\n{_format_log_data(metadata)}")
         

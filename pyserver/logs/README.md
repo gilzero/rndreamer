@@ -14,3 +14,4 @@ Both log files are configured with rotation:
 ## Log Format
 
 Logs are formatted as:
+
