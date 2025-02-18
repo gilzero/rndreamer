@@ -1,5 +1,18 @@
-// @file-overview: chat service for the app
-// @file-path: app/src/services/chatService.ts
+// @fileoverview: chat service for the app
+// @filepath: app/src/services/chatService.ts
+
+/**
+ * DEV NOTE: Chat Implementation Strategy
+ * 
+ * Currently, the app exclusively uses streaming for all chat interactions via streamChat().
+ * The non-streaming chat() method is kept as a placeholder for potential future use cases,
+ * but should only be implemented if specific non-streaming requirements arise.
+ * 
+ * We intentionally default to and reinforce the streaming approach as it provides:
+ * - Better user experience with real-time responses
+ * - More interactive feedback
+ * - Smoother UI updates
+ */
 import { ChatMessage, ModelProvider } from "../../types";
 import { DOMAIN } from "../../constants";
 import EventSource from 'react-native-sse';
@@ -27,7 +40,7 @@ class ChatService {
     return DOMAIN;
   }
 
-  async streamChat(
+  async streamChat( // Streaming method - primarily used (default)
     messages: ChatMessage[],
     options: ChatOptions,
     callbacks: ChatCallbacks
@@ -91,10 +104,12 @@ class ChatService {
     }
   }
 
+  // Non-streaming method - appears to be mainly used for health checks
   async chat(messages: ChatMessage[], options: ChatOptions): Promise<string> {
     try {
       const { provider, model } = options;
       const response = await fetch(`${this.getApiUrl()}/chat/${provider}`, {
+        // Regular REST API call
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

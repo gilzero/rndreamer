@@ -1,3 +1,4 @@
+// filepath: app/src/components/TypingIndicator.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 

@@ -1,3 +1,4 @@
+// filepath: app/src/components/ChatMessage.tsx
 import React, { memo } from 'react';
 import { View, Text, TouchableHighlight, StyleSheet, Animated } from 'react-native';
 import Markdown from '@ronradtke/react-native-markdown-display';

@@ -1,3 +1,4 @@
+// filepath: app/src/components/ChatInput.tsx
 import React from 'react';
 import { View, TextInput, TouchableHighlight, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';

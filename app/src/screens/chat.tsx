@@ -1,6 +1,24 @@
 /**
  * @fileoverview Main chat screen component that handles real-time messaging with AI models
+ * @filepath app/src/screens/chat.tsx
+ * 
  * Supports streaming responses, message history, and UI interactions like copying and clearing chat
+ *
+ * DEV NOTE: Streaming Implementation
+ * 
+ * This component is designed to exclusively use streaming for chat interactions.
+ * We enforce streaming mode (streaming: true) in all chat calls as it provides:
+ * - Immediate response feedback through token-by-token updates
+ * - Smooth UI transitions with typing indicators
+ * - Better user engagement through real-time message building
+ * 
+ * The component includes dedicated handling for streaming responses:
+ * - responseMap for managing streaming message state
+ * - Real-time token processing via onToken callback
+ * - Connection status management and error handling
+ * 
+ * Non-streaming implementation is intentionally omitted as streaming is our
+ * preferred approach for optimal user experience.
  */
 
 import React, { useEffect, useCallback } from 'react'
@@ -312,12 +330,12 @@ export function Chat() {
       // Each messageId maps to its accumulated content as tokens arrive
       const responseMap = new Map<string, string>();
 
-      await chatService.streamChat(
+      await chatService.streamChat( // Use the streaming chat method
         messages,
         {
           provider: chatType.label,
           model: chatType.name,
-          streaming: true
+          streaming: true // Always set to true for streaming response (no toggle for now)
         },
         {
           // Handle incoming tokens from the streaming response
