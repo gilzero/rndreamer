@@ -1,5 +1,7 @@
 /**
  * @fileoverview Consolidated configuration, validation, rate limiting, and logging
+ *
+ * @filepath nodeserver/src/config.ts
  */
 import { createLogger, format, transports } from 'winston';
 import rateLimit from 'express-rate-limit';

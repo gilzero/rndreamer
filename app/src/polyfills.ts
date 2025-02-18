@@ -1,6 +1,8 @@
 /**
  * @fileoverview Polyfills for React Native environment compatibility.
  * Provides necessary web platform features that are not natively available in React Native.
+ *
+ * @filepath app/src/polyfills.ts
  * 
  * This file ensures that streaming functionality works correctly in the React Native environment
  * by providing the ReadableStream API, which is used for server-sent events (SSE) in the chat service.

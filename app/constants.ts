@@ -1,6 +1,6 @@
 /**
  * @fileoverview Application-wide constants and configuration values.
- * @file-path app/constants.ts
+ * @filepath app/constants.ts
  * 
  * This file defines core configuration constants used throughout the application,
  * including API endpoints and model configurations. It serves as a central
@@ -15,9 +15,7 @@
  * @see {@link app/src/components} for model-specific icons
  */
 
-import { AnthropicIcon } from './src/components/AnthropicIcon'
-import { OpenAIIcon } from './src/components/OpenAIIcon'
-import { GeminiIcon } from './src/components/GeminiIcon'
+import { AnthropicIcon, OpenAIIcon, GeminiIcon } from './src/components'
 import { Model, ModelProvider } from './types'
 
 /**

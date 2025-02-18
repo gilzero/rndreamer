@@ -1,11 +1,13 @@
 /**
  * @fileoverview Provides React Context providers for theme and app-wide state management.
  * Contains the theme context for styling and the app context for chat-related functionality.
- * 
+ *
+ * @filepath app/src/context.tsx
+ *
  * This file sets up two main context providers:
  * 1. ThemeContext: Manages theme-related state and switching
  * 2. AppContext: Manages chat-related state and functionality
- * 
+ *
  * @see {@link ../theme.ts} for theme definitions
  * @see {@link ../types.ts} for type definitions
  * @see {@link ../screens/settings.tsx} for theme switching implementation

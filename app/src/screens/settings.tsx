@@ -22,10 +22,10 @@ import {
   AnthropicIcon,
   OpenAIIcon,
   GeminiIcon
-} from '../components/index'
+} from '../components'
 import { IIconProps, IThemeContext } from '../../types'
 import { MODELS } from '../../constants'
-import { lightTheme, darkTheme, miami, hackerNews, vercel } from '../theme'
+import { lightTheme, miami, vercel } from '../theme'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'

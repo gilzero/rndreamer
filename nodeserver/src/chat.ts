@@ -1,5 +1,7 @@
 /**
  * @fileoverview Consolidated chat service with LangChain integration
+ *
+ * @filepath nodeserver/src/chat.ts
  */
 import { Router, Request, Response } from "express";
 import asyncHandler from 'express-async-handler';

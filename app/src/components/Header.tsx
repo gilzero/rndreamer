@@ -1,8 +1,9 @@
+// filepath: app/src/components/Header.tsx
 import {
   StyleSheet, View, TouchableHighlight
 } from 'react-native'
 import { useContext } from 'react'
-import { ThemeContext, AppContext } from '../../src/context'
+import { ThemeContext, AppContext } from '../context'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
 

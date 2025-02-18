@@ -1,7 +1,8 @@
+// filepath: app/src/components/ChatModelModal.tsx
 import { useContext } from 'react'
 import { ThemeContext, AppContext } from '../context'
 import { MODELS } from '../../constants'
-import { View, Text, StyleSheet, TouchableHighlight, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
 import { Model, IThemeContext } from '../../types'
 
 interface ChatModelModalProps {

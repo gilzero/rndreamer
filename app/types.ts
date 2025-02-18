@@ -1,7 +1,9 @@
 /**
  * @fileoverview Core type definitions for the chat application.
- * @file-path app/types.ts
+ * @filepath app/types.ts
+ *
  * Contains type definitions for messages, models, contexts, and component props.
+ *
  */
 
 import { SetStateAction, Dispatch } from 'react'

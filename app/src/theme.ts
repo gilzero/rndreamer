@@ -1,3 +1,4 @@
+// filepath: app/src/theme.ts
 const colors = {
   white: '#fff',
   black: '#000',

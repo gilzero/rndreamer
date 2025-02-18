@@ -1,5 +1,7 @@
 /**
  * @fileoverview Consolidated type definitions
+ *
+ * @filepath nodeserver/src/types.ts
  */
 
 export enum ChatProvider {

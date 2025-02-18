@@ -1,6 +1,4 @@
-export { Icon } from './Icon'
+// filepath: app/src/components/index.ts
+export { Icon, AnthropicIcon, OpenAIIcon, GeminiIcon } from './Icons'
 export { Header } from './Header'
-export { AnthropicIcon } from './AnthropicIcon'
-export { OpenAIIcon } from './OpenAIIcon'
-export { GeminiIcon } from './GeminiIcon'
 export { ChatModelModal } from './ChatModelModal'
