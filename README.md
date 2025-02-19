@@ -329,3 +329,6 @@ curl -X POST http://localhost:3050/chat/gpt \
 
 
 
+## Todo
+- [ ] default models currently is hardcoded. Should be set up dynamically parsed from environment variables 
+- [ ] Add support for [Groq](https://groq.com)
