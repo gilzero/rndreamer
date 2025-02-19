@@ -32,7 +32,7 @@ import {
   GeminiIcon
 } from '../components'
 import { IconProps } from '../config'
-import { MODELS, THEMES } from '../config'
+import { MODELS, THEMES, SETTINGS_CONFIG } from '../config'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -94,10 +94,9 @@ export function Settings() {
   const { chatType, setChatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme) as SettingsStyles
   const [showHiddenSettings, setShowHiddenSettings] = useState(false)
-  const [temperature, setTemperature] = useState(0.7)
-  const [maxTokens, setMaxTokens] = useState(2000)
-  const [streamResponse, setStreamResponse] = useState(true)
-  const [systemPromptEnabled, setSystemPromptEnabled] = useState(false)
+  const [temperature, setTemperature] = useState(SETTINGS_CONFIG.MODEL_PARAMS.TEMPERATURE.DEFAULT)
+  const [maxTokens, setMaxTokens] = useState(SETTINGS_CONFIG.MODEL_PARAMS.MAX_TOKENS.DEFAULT)
+
   const pullDistance = useRef(new Animated.Value(0)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
   const rotateAnim = useRef(new Animated.Value(0)).current
@@ -277,8 +276,9 @@ export function Settings() {
               </Text>
               <Slider
                 style={styles['slider']}
-                minimumValue={0}
-                maximumValue={1}
+                minimumValue={SETTINGS_CONFIG.MODEL_PARAMS.TEMPERATURE.MIN}
+                maximumValue={SETTINGS_CONFIG.MODEL_PARAMS.TEMPERATURE.MAX}
+                step={SETTINGS_CONFIG.MODEL_PARAMS.TEMPERATURE.STEP}
                 value={temperature}
                 onValueChange={setTemperature}
                 minimumTrackTintColor={theme.tintColor + '90'}
@@ -294,9 +294,9 @@ export function Settings() {
               </Text>
               <Slider
                 style={styles['slider']}
-                minimumValue={100}
-                maximumValue={4000}
-                step={100}
+                minimumValue={SETTINGS_CONFIG.MODEL_PARAMS.MAX_TOKENS.MIN}
+                maximumValue={SETTINGS_CONFIG.MODEL_PARAMS.MAX_TOKENS.MAX}
+                step={SETTINGS_CONFIG.MODEL_PARAMS.MAX_TOKENS.STEP}
                 value={maxTokens}
                 onValueChange={setMaxTokens}
                 minimumTrackTintColor={theme.tintColor + '90'}
@@ -305,35 +305,7 @@ export function Settings() {
               />
             </View>
 
-            <View style={styles['switchRow']}>
-              <View style={styles['switchTextContainer']}>
-                <Text style={styles['hiddenSettingLabel']}>Stream Response</Text>
-                <Text style={styles['hiddenSettingDescription']}>
-                  Show the response as it's being generated. Disable for faster complete responses.
-                </Text>
-              </View>
-              <Switch
-                value={streamResponse}
-                onValueChange={setStreamResponse}
-                trackColor={{ false: theme.borderColor + '60', true: theme.tintColor + '90' }}
-                thumbColor={theme.backgroundColor}
-              />
-            </View>
 
-            <View style={styles['switchRow']}>
-              <View style={styles['switchTextContainer']}>
-                <Text style={styles['hiddenSettingLabel']}>System Prompt</Text>
-                <Text style={styles['hiddenSettingDescription']}>
-                  Enable custom system-level instructions to guide the model's behavior.
-                </Text>
-              </View>
-              <Switch
-                value={systemPromptEnabled}
-                onValueChange={setSystemPromptEnabled}
-                trackColor={{ false: theme.borderColor + '60', true: theme.tintColor + '90' }}
-                thumbColor={theme.backgroundColor}
-              />
-            </View>
           </View>
           <View style={[styles['sectionDivider'], styles['hiddenSectionDivider']]} />
         </Animated.View>

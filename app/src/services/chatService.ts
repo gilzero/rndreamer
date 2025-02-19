@@ -33,7 +33,7 @@ export interface ChatCallbacks {
   onConnectionStatus?: (status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting') => void;
 }
 
-const { STREAM_TIMEOUT } = APP_CONFIG.SSE;
+const { STREAM } = APP_CONFIG.NETWORK.TIMEOUTS;
 
 class ChatService {
   private getApiUrl() {
@@ -52,8 +52,8 @@ class ChatService {
 
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
-        reject(new ChatError('Stream timeout', 'STREAM_TIMEOUT'));
-      }, STREAM_TIMEOUT);
+        reject(new ChatError(APP_CONFIG.ERRORS.CONNECTION.TIMEOUT, 'STREAM_TIMEOUT'));
+      }, STREAM);
     });
 
     try {

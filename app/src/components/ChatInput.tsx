@@ -2,9 +2,7 @@
 import React from 'react';
 import { View, TextInput, TouchableHighlight, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { MESSAGE_LIMITS } from '../utils';
 import { APP_CONFIG } from '../config';
-
 
 interface ChatInputProps {
   input: string;
@@ -36,7 +34,7 @@ export const ChatInput = React.memo(({
           placeholder={loading ? 'AI is thinking...' : 'Message'}
           placeholderTextColor={theme.placeholderTextColor + '80'}
           value={input}
-          maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
+          maxLength={APP_CONFIG.VALIDATION.MESSAGES.MAX_LENGTH}
           editable={!loading}
           accessible={true}
           accessibilityLabel="Message input field"

@@ -15,6 +15,27 @@ import { SetStateAction, Dispatch } from 'react'
 import { NumberProp } from 'react-native-svg'
 import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './components/Icons'
 
+// ============= Configuration Types =============
+// Network Configuration Types
+export type NetworkTimeouts = typeof APP_CONFIG.NETWORK.TIMEOUTS;
+export type NetworkRetry = typeof APP_CONFIG.NETWORK.RETRY;
+export type NetworkRateLimits = typeof APP_CONFIG.NETWORK.RATE_LIMITS;
+
+// Validation Configuration Types
+export type ValidationMessages = typeof APP_CONFIG.VALIDATION.MESSAGES;
+export type ValidationInputs = typeof APP_CONFIG.VALIDATION.INPUTS;
+
+// Cache Configuration Types
+export type CacheConfig = typeof APP_CONFIG.CACHE;
+
+// Error Configuration Types
+export type ValidationErrors = typeof APP_CONFIG.ERRORS.VALIDATION;
+export type ConnectionErrors = typeof APP_CONFIG.ERRORS.CONNECTION;
+export type CacheErrors = typeof APP_CONFIG.ERRORS.CACHE;
+
+// Complete Configuration Type
+export type AppConfig = typeof APP_CONFIG;
+
 // ============= Core Message Types =============
 export type MessageRole = 'user' | 'assistant' | 'system'
 
@@ -109,22 +130,118 @@ export interface Theme {
  * Application-wide configuration constants
  */
 export const APP_CONFIG = {
-  // Error messages
+  /**
+   * Network and API Configuration
+   * 
+   * Settings for API endpoints, timeouts, retries, and other network-related configurations
+   */
+  NETWORK: {
+    // Timeouts in milliseconds
+    TIMEOUTS: {
+      API_REQUEST: 30000,    // 30 seconds for general API requests
+      STREAM: 60000,         // 1 minute for streaming responses
+      CONNECTION: 10000,     // 10 seconds for initial connection
+      SOCKET: 5000,          // 5 seconds for websocket operations
+    },
+    // Retry configuration
+    RETRY: {
+      MAX_ATTEMPTS: 3,      // Maximum number of retry attempts
+      BACKOFF_MS: 1000,     // Base delay between retries in ms
+      MAX_BACKOFF_MS: 5000, // Maximum delay between retries
+    },
+    // Rate limiting
+    RATE_LIMITS: {
+      REQUESTS_PER_MINUTE: 60,
+      CONCURRENT_STREAMS: 3,
+    },
+  },
+
+  /**
+   * Data Validation Configuration
+   * 
+   * Constants for input validation, data limits, and sanitization
+   */
+  VALIDATION: {
+    MESSAGES: {
+      MAX_LENGTH: 4000,     // Maximum characters per message
+      MIN_LENGTH: 1,        // Minimum characters per message
+      MAX_HISTORY: 100,     // Maximum messages in conversation history
+    },
+    INPUTS: {
+      MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB in bytes
+      ALLOWED_FILE_TYPES: ['txt', 'pdf', 'doc', 'docx'],
+    },
+  },
+
+  /**
+   * Cache Configuration
+   * 
+   * Settings for client-side caching behavior
+   */
+  CACHE: {
+    MESSAGE_TTL: 24 * 60 * 60 * 1000,  // 24 hours in milliseconds
+    MAX_CACHE_SIZE: 50 * 1024 * 1024,   // 50MB in bytes
+    INVALIDATION_INTERVAL: 60 * 60 * 1000, // 1 hour in milliseconds
+  },
+
+  /**
+   * Error Messages
+   * 
+   * Centralized error messages for consistent error handling
+   */
   ERRORS: {
     VALIDATION: {
       EMPTY_MESSAGE: 'Message content cannot be empty',
       MESSAGE_TOO_LONG: (limit: number) => `Message exceeds maximum length of ${limit} characters`,
       TOO_MANY_MESSAGES: (limit: number) => `Conversation exceeds maximum of ${limit} messages`,
+      INVALID_FILE_TYPE: (types: string[]) => `File type not supported. Allowed types: ${types.join(', ')}`,
+      FILE_TOO_LARGE: (maxSize: number) => `File size exceeds maximum of ${maxSize / (1024 * 1024)}MB`,
     },
     CONNECTION: {
       TIMEOUT: 'Connection timeout',
       FAILED: 'Failed to establish connection',
       INVALID_MODEL: (model: string, supported: string[]) => `Unsupported model type: ${model}. Must be one of: ${supported.join(', ')}`,
+      RATE_LIMITED: 'Too many requests. Please try again later.',
+      CONCURRENT_LIMIT: 'Maximum number of concurrent streams reached',
+    },
+    CACHE: {
+      STORAGE_FULL: 'Local storage is full. Please clear some space.',
+      INVALID_CACHE: 'Cache data is corrupted or invalid',
     },
   },
-  // UI Configuration
+  /**
+   * UI Configuration System
+   * 
+   * A centralized configuration system for consistent UI styling across the application.
+   * All UI-related constants should be defined here to maintain a single source of truth.
+   * 
+   * Usage:
+   * ```typescript
+   * import { APP_CONFIG } from '../config';
+   * 
+   * // Spacing
+   * marginBottom: APP_CONFIG.UI.SPACING.MEDIUM
+   * 
+   * // Typography
+   * fontSize: APP_CONFIG.UI.TYPOGRAPHY.BODY
+   * 
+   * // Animations
+   * duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM
+   * ```
+   */
   UI: {
-    // Common spacing values
+    /**
+     * Spacing Scale
+     * 
+     * Consistent spacing values for margins, padding, and layout.
+     * Uses an 8-point grid system for harmonious spacing:
+     * - TINY: 4px (half-step)
+     * - SMALL: 8px (base)
+     * - MEDIUM: 12px (1.5x)
+     * - LARGE: 16px (2x)
+     * - XLARGE: 24px (3x)
+     * - XXLARGE: 32px (4x)
+     */
     SPACING: {
       TINY: 4,
       SMALL: 8,
@@ -135,7 +252,17 @@ export const APP_CONFIG = {
       HUGE: 32,
       SECTION: 40,
     },
-    // Typography scale
+    /**
+     * Typography Scale
+     * 
+     * Standardized font sizes for consistent text hierarchy:
+     * - SMALL: 13px (captions, helper text)
+     * - BODY: 15px (default body text)
+     * - MEDIUM: 16px (emphasized body)
+     * - LARGE: 18px (subtitles)
+     * - XLARGE: 20px (small headers)
+     * - TITLE: 24px (main headers)
+     */
     TYPOGRAPHY: {
       SMALL: 13,
       BODY: 15,
@@ -144,14 +271,41 @@ export const APP_CONFIG = {
       XLARGE: 20,
       TITLE: 24,
     },
-    // Border radius values
+    /**
+     * Border Radius Scale
+     * 
+     * Consistent border radius values for UI elements:
+     * - SMALL: 4px (subtle rounding)
+     * - MEDIUM: 8px (default rounding)
+     * - LARGE: 12px (emphasized rounding)
+     * - PILL: 24px (pill-shaped elements)
+     */
     BORDER_RADIUS: {
       SMALL: 4,
       MEDIUM: 8,
       LARGE: 12,
       PILL: 24,
     },
-    // Animation timings
+    /**
+     * Animation Configuration
+     * 
+     * Standardized animation values for consistent motion design:
+     * 
+     * DURATION:
+     * - FAST: 100ms (micro-interactions)
+     * - MEDIUM: 200ms (standard transitions)
+     * - SLOW: 300ms (emphasized transitions)
+     * - VERY_SLOW: 400ms (major transitions)
+     * 
+     * DELAY:
+     * - DEFAULT: 100ms (standard delay)
+     * - LONG: 200ms (emphasized delay)
+     * 
+     * EASING:
+     * - DEFAULT: Basic easing
+     * - IN_OUT: Smooth acceleration/deceleration
+     * - BOUNCE: Playful bouncy effect
+     */
     ANIMATION: {
       DURATION: {
         FAST: 100,
@@ -169,7 +323,14 @@ export const APP_CONFIG = {
         BOUNCE: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
       }
     },
-    // Input styling
+    /**
+     * Input Component Configuration
+     * 
+     * Standard styling for input elements:
+     * - BORDER_RADIUS: Consistent with design system
+     * - PADDING: Comfortable spacing for text input
+     * - HEIGHT: Standard input height for good touch targets
+     */
     INPUT: {
       BORDER_RADIUS: 24,
       PADDING: {
@@ -178,7 +339,20 @@ export const APP_CONFIG = {
       },
       HEIGHT: 44
     },
-    // Common component sizes
+    /**
+     * Component Size Configurations
+     * 
+     * Standardized sizes for various UI components:
+     * 
+     * ICON:
+     * - SMALL: 16px (inline icons)
+     * - MEDIUM: 20px (default icons)
+     * - LARGE: 24px (emphasized icons)
+     * 
+     * TYPING_INDICATOR:
+     * - WIDTH/HEIGHT: Standard dimensions
+     * - DOT_SIZE: Size of typing animation dots
+     */
     SIZES: {
       ICON: {
         SMALL: 18,
@@ -200,19 +374,7 @@ export const APP_CONFIG = {
       }
     }
   },
-  // SSE Connection settings
-  SSE: {
-    MAX_RETRIES: 3,
-    INITIAL_RETRY_DELAY: 1000, // 1 second
-    STREAM_TIMEOUT: 60000, // 1 minute timeout for entire stream
-  },
   
-  // Message validation limits
-  MESSAGE_LIMITS: {
-    MAX_MESSAGE_LENGTH: Number(process.env['EXPO_PUBLIC_MAX_MESSAGE_LENGTH'] || 24000),
-    MAX_MESSAGES_IN_CONTEXT: Number(process.env['EXPO_PUBLIC_MAX_MESSAGES_IN_CONTEXT'] || 50),
-    MIN_MESSAGE_LENGTH: Number(process.env['EXPO_PUBLIC_MIN_MESSAGE_LENGTH'] || 1)
-  },
 
   // Local storage keys
   STORAGE_KEYS: {
@@ -366,6 +528,24 @@ export const THEMES: ThemeType = {
     tintTextColor: colors.white,
     tabBarActiveTintColor: colors.white,
     tabBarInactiveTintColor: colors.lightWhite,
+  }
+}
+
+// ============= Settings Configuration =============
+export const SETTINGS_CONFIG = {
+  MODEL_PARAMS: {
+    TEMPERATURE: {
+      DEFAULT: 0.7,
+      MIN: 0,
+      MAX: 1,
+      STEP: 0.01
+    },
+    MAX_TOKENS: {
+      DEFAULT: 2000,
+      MIN: 100,
+      MAX: 8192,
+      STEP: 100
+    }
   }
 }
 

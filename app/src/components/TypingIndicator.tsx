@@ -48,8 +48,8 @@ export const TypingIndicator = React.memo(({
 
 const getStyles = (theme: any) => StyleSheet.create({
   typingIndicatorContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: APP_CONFIG.UI.SPACING.XLARGE,
+    paddingVertical: APP_CONFIG.UI.SPACING.MEDIUM,
   },
   typingIndicatorContent: {
     flexDirection: 'row',
@@ -59,32 +59,32 @@ const getStyles = (theme: any) => StyleSheet.create({
   modelIconContainer: {
     width: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.WIDTH,
     height: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.HEIGHT,
-    borderRadius: 14,
+    borderRadius: APP_CONFIG.UI.BORDER_RADIUS.LARGE,
     backgroundColor: theme.tintColor + '20',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: APP_CONFIG.UI.SPACING.MEDIUM,
   },
   modelIcon: {
     color: theme.tintColor,
-    fontSize: 14,
+    fontSize: APP_CONFIG.UI.TYPOGRAPHY.SMALL,
     fontFamily: theme.mediumFont,
   },
   dotsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.backgroundColor,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: APP_CONFIG.UI.BORDER_RADIUS.LARGE,
+    paddingHorizontal: APP_CONFIG.UI.SPACING.MEDIUM,
+    paddingVertical: APP_CONFIG.UI.SPACING.SMALL,
     borderWidth: 1,
     borderColor: theme.borderColor + '20',
   },
   typingDot: {
     width: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.DOT_SIZE,
     height: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.DOT_SIZE,
-    borderRadius: 3,
+    borderRadius: APP_CONFIG.UI.BORDER_RADIUS.SMALL,
     backgroundColor: theme.tintColor,
-    marginHorizontal: 3,
+    marginHorizontal: APP_CONFIG.UI.SPACING.TINY,
   }
 }); 

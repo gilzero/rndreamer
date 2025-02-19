@@ -11,7 +11,7 @@ import { useContext } from 'react'
 import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
-import { THEMES } from '../config'
+import { THEMES, APP_CONFIG } from '../config'
 
 export function Header() {
   const { theme } = useContext(ThemeContext)
@@ -32,14 +32,14 @@ export function Header() {
         >
           <FontAwesome6
             name="boxes-stacked"
-            size={22}
+            size={APP_CONFIG.UI.SIZES.ICON.MEDIUM}
             color={theme.textColor}
           />
         </TouchableHighlight>
 
         <FontAwesome6
           name="dove"
-          size={28}
+          size={APP_CONFIG.UI.SIZES.ICON.LARGE}
           color={theme.textColor}
         />
 
@@ -51,7 +51,7 @@ export function Header() {
         >
           <Ionicons
             name="add-circle-outline"
-            size={24}
+            size={APP_CONFIG.UI.SIZES.ICON.MEDIUM}
             color={theme.textColor}
           />
         </TouchableHighlight>
@@ -66,16 +66,16 @@ function getStyles(theme: typeof THEMES.light) {
       backgroundColor: theme.backgroundColor,
       borderBottomWidth: 1,
       borderBottomColor: theme.borderColor,
-      paddingVertical: 15,
+      paddingVertical: APP_CONFIG.UI.SPACING.MEDIUM,
     },
     headerContent: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 15,
+      paddingHorizontal: APP_CONFIG.UI.SPACING.MEDIUM,
     },
     button: {
-      padding: 15,
+      padding: APP_CONFIG.UI.SPACING.MEDIUM,
     }
   })
 }

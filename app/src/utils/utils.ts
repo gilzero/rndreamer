@@ -25,14 +25,6 @@ export class ChatError extends Error {
   }
 }
 
-// =============== Message Handling Constants ===============
-
-/**
- * Configuration constants for message handling.
- * These values can be overridden through environment variables.
- */
-export const MESSAGE_LIMITS = APP_CONFIG.MESSAGE_LIMITS;
-
 // =============== Message Utilities ===============
 
 /**
@@ -42,7 +34,7 @@ export const MESSAGE_LIMITS = APP_CONFIG.MESSAGE_LIMITS;
  * @param numChars - Maximum number of characters to return (defaults to MAX_MESSAGE_LENGTH)
  * @returns Trimmed and truncated string, or empty string if input is invalid
  */
-export function getFirstNCharsOrLess(text: string, numChars: number = MESSAGE_LIMITS.MAX_MESSAGE_LENGTH): string {
+export function getFirstNCharsOrLess(text: string, numChars: number = APP_CONFIG.VALIDATION.MESSAGES.MAX_LENGTH): string {
   if (!text?.trim()) {
     return '';
   }
@@ -109,10 +101,10 @@ export function validateMessage(message: ChatMessage): void {
     throw new ChatValidationError('EMPTY_MESSAGE', APP_CONFIG.ERRORS.VALIDATION.EMPTY_MESSAGE);
   }
 
-  if (content.length > MESSAGE_LIMITS.MAX_MESSAGE_LENGTH) {
+  if (content.length > APP_CONFIG.VALIDATION.MESSAGES.MAX_LENGTH) {
     throw new ChatValidationError(
       'MESSAGE_TOO_LONG',
-      APP_CONFIG.ERRORS.VALIDATION.MESSAGE_TOO_LONG(MESSAGE_LIMITS.MAX_MESSAGE_LENGTH)
+      APP_CONFIG.ERRORS.VALIDATION.MESSAGE_TOO_LONG(APP_CONFIG.VALIDATION.MESSAGES.MAX_LENGTH)
     );
   }
 }
@@ -124,10 +116,10 @@ export function validateMessage(message: ChatMessage): void {
  * @returns MessageValidationError if validation fails, null if validation passes
  */
 export function validateMessages(messages: ChatMessage[]): MessageValidationError | null {
-  if (messages.length > MESSAGE_LIMITS.MAX_MESSAGES_IN_CONTEXT) {
+  if (messages.length > APP_CONFIG.VALIDATION.MESSAGES.MAX_HISTORY) {
     return {
       code: 'TOO_MANY_MESSAGES',
-      message: APP_CONFIG.ERRORS.VALIDATION.TOO_MANY_MESSAGES(MESSAGE_LIMITS.MAX_MESSAGES_IN_CONTEXT)
+      message: APP_CONFIG.ERRORS.VALIDATION.TOO_MANY_MESSAGES(APP_CONFIG.VALIDATION.MESSAGES.MAX_HISTORY)
     };
   }
   
@@ -183,7 +175,7 @@ export interface SSEConnectionCallbacks {
   onConnectionStatus?: (status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting') => void;
 }
 
-const { MAX_RETRIES, INITIAL_RETRY_DELAY } = APP_CONFIG.SSE;
+const { MAX_ATTEMPTS, BACKOFF_MS, MAX_BACKOFF_MS } = APP_CONFIG.NETWORK.RETRY;
 
 /**
  * Creates and manages an SSE connection with automatic retry functionality.
@@ -220,7 +212,7 @@ export async function createSSEConnection(
       const timeout = setTimeout(() => {
         es.close();
         reject(new ChatError(APP_CONFIG.ERRORS.CONNECTION.TIMEOUT, 'CONNECTION_TIMEOUT'));
-      }, 10000); // 10 second timeout
+      }, APP_CONFIG.NETWORK.TIMEOUTS.CONNECTION);
 
       es.addEventListener('open', () => {
         clearTimeout(timeout);
@@ -234,8 +226,12 @@ export async function createSSEConnection(
         clearTimeout(timeout);
         es.close();
         
-        if (retryCount < MAX_RETRIES) {
-          const retryDelay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+        if (retryCount < MAX_ATTEMPTS) {
+          // Calculate retry delay with exponential backoff, capped at MAX_BACKOFF_MS
+          const retryDelay = Math.min(
+            BACKOFF_MS * Math.pow(2, retryCount),
+            MAX_BACKOFF_MS
+          );
           await new Promise(resolve => setTimeout(resolve, retryDelay));
           
           try {

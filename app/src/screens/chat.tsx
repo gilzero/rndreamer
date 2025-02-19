@@ -49,7 +49,6 @@ import { ChatError } from '../utils'
 import { APP_CONFIG } from '../config'
 import { 
   validateMessage, 
-  MESSAGE_LIMITS, 
   getFirstNCharsOrLess 
 } from '../utils'
 import Toast from 'react-native-toast-message'
@@ -488,7 +487,7 @@ export function Chat() {
                   placeholder='Message'
                   placeholderTextColor={theme.placeholderTextColor + '80'}
                   autoCorrect={true}
-                  maxLength={MESSAGE_LIMITS.MAX_MESSAGE_LENGTH}
+                  maxLength={APP_CONFIG.VALIDATION.MESSAGES.MAX_LENGTH}
                   accessible={true}
                   accessibilityLabel="Message input field"
                   accessibilityHint="Enter your message to the AI"
