@@ -11,6 +11,6 @@
  * ```
  */
 
-export { Chat } from './chat'
-export { Agent } from './agent'
-export { Settings } from './settings'
+export { ChatScreen } from './ChatScreen'
+export { AgentScreen } from './AgentScreen'
+export { SettingsScreen } from './SettingsScreen'

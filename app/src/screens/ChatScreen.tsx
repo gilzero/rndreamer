@@ -21,45 +21,40 @@
  * preferred approach for optimal user experience.
  */
 
-import React, { useEffect, useCallback } from 'react'
-import {
-  View,
-  Text,
-  KeyboardAvoidingView,
-  StyleSheet,
-  TouchableHighlight,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  FlatList,
-  Keyboard,
-  Animated,
-  Easing
-} from 'react-native'
-import 'react-native-get-random-values'
-import { useContext, useState, useRef } from 'react'
-import { ThemeContext, AppContext } from '../contexts/AppContexts'
-import { v4 as uuid } from 'uuid'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { ChatMessage, ChatState } from '../config'
-import * as Clipboard from 'expo-clipboard'
-import { useActionSheet } from '@expo/react-native-action-sheet'
-import { chatService } from '../services'
-import { ChatError } from '../utils'
-import { APP_CONFIG } from '../config'
+import React, { useEffect, useCallback, useContext, useState, useRef } from 'react';
 import { 
-  validateMessage, 
-  getFirstNCharsOrLess 
-} from '../utils'
-import Toast from 'react-native-toast-message'
-import { ChatMessage as ChatMessageComponent, ChatInput, TypingIndicator } from '../components/ChatUI'
+  View, 
+  Text, 
+  KeyboardAvoidingView, 
+  StyleSheet, 
+  TouchableHighlight, 
+  TextInput, 
+  ScrollView, 
+  ActivityIndicator, 
+  FlatList, 
+  Keyboard, 
+  Animated, 
+  Easing 
+} from 'react-native';
+import 'react-native-get-random-values';
+import { v4 as uuid } from 'uuid';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useActionSheet } from '@expo/react-native-action-sheet';
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-toast-message';
+
+import { ThemeContext, AppContext } from '../contexts';
+import { ChatMessage, ChatState, APP_CONFIG } from '../config';
+import { chatService } from '../services';
+import { ChatError, validateMessage, getFirstNCharsOrLess } from '../utils';
+import { ChatMessage as ChatMessageComponent, ChatInput, TypingIndicator } from '../components/ChatUI';
 
 /**
  * Main Chat component that provides the chat interface and handles messaging logic.
  * Manages the chat state, handles user input, and coordinates with AI models for responses.
  * @component
  */
-export function Chat() {
+export function ChatScreen() {
   // State Management
   /** Controls loading state during AI responses */
   const [loading, setLoading] = useState<boolean>(false)

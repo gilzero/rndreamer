@@ -1,9 +1,10 @@
+// filepath: app/src/components/ChatUI.tsx
+// file description: chat input and message components
 import React, { memo } from 'react';
 import { View, TextInput, TouchableHighlight, StyleSheet, Animated, ActivityIndicator, Text } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Markdown from '@ronradtke/react-native-markdown-display';
-import { ChatMessage as ChatMessageType } from '../config';
-import { APP_CONFIG } from '../config';
+import { ChatMessage as ChatMessageType, APP_CONFIG } from '../config';
 
 // ChatInput Component
 interface ChatInputProps {

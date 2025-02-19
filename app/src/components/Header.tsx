@@ -1,17 +1,14 @@
-// filepath: app/src/components/Header.tsx
 /**
  * Application header component with navigation and action buttons.
  * 
- * @see {@link ../../App.tsx} for theme and app context
+ * @filepath app/src/components/Header.tsx
  */
-import {
-  StyleSheet, View, TouchableHighlight
-} from 'react-native'
-import { useContext } from 'react'
-import { ThemeContext, AppContext } from '../contexts/AppContexts'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
-import { THEMES, APP_CONFIG } from '../config'
+import { StyleSheet, View, TouchableHighlight } from 'react-native';
+import { useContext } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { ThemeContext, AppContext } from '../contexts';
+import { THEMES, APP_CONFIG } from '../config';
 
 export function Header() {
   const { theme } = useContext(ThemeContext)

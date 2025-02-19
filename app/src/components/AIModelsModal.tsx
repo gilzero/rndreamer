@@ -1,18 +1,14 @@
-// filepath: app/src/components/AIModelsModal.tsx
 /**
+ * // filepath: app/src/components/AIModelsModal.tsx
+ * 
  * Modal component for selecting AI chat models.
  * Provides a bottom sheet interface for switching between different AI providers.
  * 
- * @see {@link ../../App.tsx} for context providers
- * @see {@link ../../constants.ts} for model definitions
  */
 import { useContext } from 'react'
-import { ThemeContext, AppContext } from '../contexts/AppContexts'
-import { MODELS } from '../config'
 import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
-import { Model } from '../config'
-import { THEMES } from '../config'
-import { APP_CONFIG } from '../config'
+import { ThemeContext, AppContext } from '../contexts'
+import { MODELS, Model, THEMES, APP_CONFIG } from '../config'
 
 interface AIModelsModalProps {
   handlePresentModalPress: () => void;

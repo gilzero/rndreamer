@@ -1,10 +1,10 @@
 // filepath: app/src/screens/agent.tsx
 import React, { useContext } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { ThemeContext } from '../contexts/AppContexts'
+import { ThemeContext } from '../contexts'
 import { THEMES } from '../config'
 
-export function Agent() {
+export function AgentScreen() {
   const { theme } = useContext(ThemeContext)
   const styles = getStyles(theme)
 

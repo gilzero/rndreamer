@@ -10,19 +10,20 @@
  */
 
 import { useContext } from 'react';
-import { StyleSheet, View} from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Chat, Settings, Agent } from '../screens'
-import { Header } from '../components'
-import FeatherIcon from '@expo/vector-icons/Feather'
+import { ParamListBase } from '@react-navigation/native';
+import FeatherIcon from '@expo/vector-icons/Feather';
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
-} from 'react-native-safe-area-context'
-import { ThemeContext } from '../contexts/AppContexts'
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
-import { ParamListBase } from '@react-navigation/native';
-import { Theme } from '../config'
+} from 'react-native-safe-area-context';
+
+import { ChatScreen, SettingsScreen, AgentScreen } from '../screens';
+import { Header } from '../components';
+import { ThemeContext } from '../contexts';
+import { Theme } from '../config';
 
 type RootTabParamList = ParamListBase & {
   'AI Chat': undefined;
@@ -146,7 +147,7 @@ function AppNavigatorComponent() {
       >
         <Tab.Screen
           name="AI Chat"
-          component={Chat}
+          component={ChatScreen}
           options={{
             header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
@@ -156,7 +157,7 @@ function AppNavigatorComponent() {
         />
         <Tab.Screen
           name="AI Agent"
-          component={Agent}
+          component={AgentScreen}
           options={{
             header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
@@ -166,7 +167,7 @@ function AppNavigatorComponent() {
         />
         <Tab.Screen
           name="Settings"
-          component={Settings}
+          component={SettingsScreen}
           options={{
             header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
@@ -184,7 +185,7 @@ function AppNavigatorComponent() {
  * Root component of the application.
  * Sets up the SafeAreaProvider and global toast notifications.
  */
-export function AppNavigator() {
+export function MainNavigator() {
   return (
     <SafeAreaProvider>
       <AppNavigatorComponent />

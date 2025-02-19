@@ -13,34 +13,31 @@
  * @see {@link ./types.ts} for type definitions
  */
 
-import 'react-native-gesture-handler'
-import { ReadableStream } from 'web-streams-polyfill'
+import 'react-native-gesture-handler';
+import { ReadableStream } from 'web-streams-polyfill';
 
 // Add ReadableStream polyfill for streaming functionality
 if (typeof global.ReadableStream === 'undefined') {
   (global as any).ReadableStream = ReadableStream;
 }
-import { useState, useEffect, useRef, SetStateAction } from 'react'
-import { NavigationContainer } from '@react-navigation/native'
-import { AppNavigator } from './navigation/AppNavigator'
-import { useFonts } from 'expo-font'
-import { Model, MODELS, THEMES, FONTS, getBottomSheetStyles, APP_CONFIG } from './config'
+
+import { useState, useEffect, useRef, SetStateAction } from 'react';
+import { LogBox } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SplashScreen from 'expo-splash-screen';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useFonts } from 'expo-font';
+
+import { MainNavigator } from './navigation';
+import { Model, MODELS, THEMES, FONTS, getBottomSheetStyles, APP_CONFIG } from './config';
+import { AIModelsModal } from './components/index';
+import { ThemeContext, AppContext } from './contexts';
+import { ErrorBoundary } from './components';
 
 const { STORAGE_KEYS } = APP_CONFIG;
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { AIModelsModal } from './components/index'
-import { ActionSheetProvider } from '@expo/react-native-action-sheet'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as SplashScreen from 'expo-splash-screen'
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetModalProvider,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet'
-import { LogBox } from 'react-native'
-import { ThemeContext, AppContext } from './contexts/AppContexts'
-import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -192,7 +189,7 @@ const App: React.FC = () => {
           }}>
             <ActionSheetProvider>
               <NavigationContainer>
-                <AppNavigator />
+                <MainNavigator />
               </NavigationContainer>
             </ActionSheetProvider>
             <BottomSheetModalProvider>

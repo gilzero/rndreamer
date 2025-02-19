@@ -28,7 +28,7 @@ import { useNavigation } from '@react-navigation/native'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { ThemeContext, AppContext } from '../contexts/AppContexts'
+import { ThemeContext, AppContext } from '../contexts'
 import { AnthropicIcon, OpenAIIcon, GeminiIcon } from '../components'
 import { IconProps, MODELS, THEMES, SETTINGS_CONFIG, APP_CONFIG } from '../config'
 
@@ -82,7 +82,7 @@ type SettingsStyles = {
  * Allows users to switch between different AI providers and displays current selection.
  * @component
  */
-export function Settings() {
+export function SettingsScreen() {
   const { theme, setTheme } = useContext(ThemeContext)
   const { chatType, setChatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme) as SettingsStyles

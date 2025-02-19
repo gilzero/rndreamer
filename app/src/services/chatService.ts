@@ -15,8 +15,7 @@
  */
 import EventSource from 'react-native-sse';
 import { ChatMessage, ModelProvider, DOMAIN, APP_CONFIG } from "../config";
-import { createSSEConnection } from '../utils';
-import { ChatError } from '../utils';
+import { createSSEConnection, ChatError } from '../utils';
 
 export interface ChatOptions {
   provider: ModelProvider;
