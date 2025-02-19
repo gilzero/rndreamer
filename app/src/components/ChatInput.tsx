@@ -3,6 +3,8 @@ import React from 'react';
 import { View, TextInput, TouchableHighlight, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { MESSAGE_LIMITS } from '../utils';
+import { APP_CONFIG } from '../config';
+
 
 interface ChatInputProps {
   input: string;
@@ -62,7 +64,7 @@ export const ChatInput = React.memo(({
           {loading ? (
             <ActivityIndicator size="small" color={theme.tintTextColor} />
           ) : (
-            <Ionicons name="arrow-up-outline" size={20} color={theme.tintTextColor} />
+            <Ionicons name="arrow-up-outline" size={APP_CONFIG.UI.SIZES.ICON.MEDIUM} color={theme.tintTextColor} />
           )}
         </Animated.View>
       </TouchableHighlight>
@@ -72,21 +74,21 @@ export const ChatInput = React.memo(({
 
 const getStyles = (theme: any) => StyleSheet.create({
   chatInputContainer: {
-    paddingTop: 5,
+    paddingTop: APP_CONFIG.UI.INPUT.PADDING.VERTICAL,
     borderColor: theme.borderColor,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 5
+    paddingBottom: APP_CONFIG.UI.INPUT.PADDING.VERTICAL
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 24,
+    borderRadius: APP_CONFIG.UI.INPUT.BORDER_RADIUS,
     color: theme.textColor,
-    marginHorizontal: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+    marginHorizontal: APP_CONFIG.UI.SPACING.MEDIUM,
+    paddingVertical: APP_CONFIG.UI.SPACING.MEDIUM,
+    paddingHorizontal: APP_CONFIG.UI.SPACING.XLARGE,
     paddingRight: 50,
     borderColor: theme.borderColor + '30',
     fontFamily: theme.mediumFont,
@@ -96,8 +98,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     borderColor: theme.tintColor + '30',
   },
   chatButton: {
-    marginRight: 14,
-    padding: 14,
+    marginRight: APP_CONFIG.UI.SPACING.MEDIUM,
+    padding: APP_CONFIG.UI.SPACING.MEDIUM,
     borderRadius: 99,
     backgroundColor: theme.tintColor,
   },

@@ -127,12 +127,12 @@ export function Settings() {
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 300,
+            duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM,
             useNativeDriver: true,
           }),
           Animated.timing(rotateAnim, {
             toValue: 1,
-            duration: 300,
+            duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM,
             useNativeDriver: true,
           })
         ]).start()
@@ -158,12 +158,12 @@ export function Settings() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: showHiddenSettings ? 0 : 1,
-        duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
+        duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM,
         useNativeDriver: true,
       }),
       Animated.timing(rotateAnim, {
         toValue: showHiddenSettings ? 0 : 1,
-        duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
+        duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM,
         useNativeDriver: true,
       })
     ]).start()

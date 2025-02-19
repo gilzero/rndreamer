@@ -12,6 +12,7 @@ import { MODELS } from '../config'
 import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
 import { Model } from '../config'
 import { THEMES } from '../config'
+import { APP_CONFIG } from '../config'
 
 interface ChatModelModalProps {
   handlePresentModalPress: () => void;
@@ -113,26 +114,27 @@ function getStyles(theme: typeof THEMES.light) {
       justifyContent:'center',
     },
     logo: {
-      width: 22, height: 17,
-      marginRight: 10
+      width: APP_CONFIG.UI.SIZES.ICON.MEDIUM,
+      height: APP_CONFIG.UI.SIZES.ICON.MEDIUM,
+      marginRight: APP_CONFIG.UI.SPACING.MEDIUM
     },
     chatOptionsText: {
       color: theme.textColor,
-      marginBottom: 22,
+      marginBottom: APP_CONFIG.UI.SPACING.XLARGE,
       textAlign: 'center',
-      fontSize: 16,
+      fontSize: APP_CONFIG.UI.TYPOGRAPHY.MEDIUM,
       fontFamily: theme.semiBoldFont,
-      marginLeft: 10
+      marginLeft: APP_CONFIG.UI.SPACING.MEDIUM
     },
     bottomSheetContainer: {
       borderColor: theme.borderColor,
       borderWidth: 1,
-      padding: 24,
+      padding: APP_CONFIG.UI.SPACING.XXLARGE,
       justifyContent: 'center',
       backgroundColor: theme.backgroundColor,
-      marginHorizontal: 14,
-      marginBottom: 24,
-      borderRadius: 20
+      marginHorizontal: APP_CONFIG.UI.SPACING.MEDIUM,
+      marginBottom: APP_CONFIG.UI.SPACING.XXLARGE,
+      borderRadius: APP_CONFIG.UI.BORDER_RADIUS.LARGE
     }
   })
 }
@@ -141,9 +143,9 @@ function optionContainer(theme: typeof THEMES.light, baseType: string, type: str
   const selected = baseType === type
   return {
     backgroundColor: selected ? theme.tintColor : theme.backgroundColor,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 9,
+    padding: APP_CONFIG.UI.SPACING.MEDIUM,
+    borderRadius: APP_CONFIG.UI.BORDER_RADIUS.MEDIUM,
+    marginBottom: APP_CONFIG.UI.SPACING.SMALL,
     flexDirection: 'row' as 'row',
     justifyContent: 'center' as 'center',
     alignItems: 'center' as 'center',
@@ -155,11 +157,11 @@ function optionText(theme: typeof THEMES.light, baseType: string, type: string) 
   return {
     color: selected ? theme.tintTextColor : theme.textColor,
     fontFamily: theme.boldFont,
-    fontSize: 15,
+    fontSize: APP_CONFIG.UI.TYPOGRAPHY.BODY,
     shadowColor: 'rgba(0, 0, 0, .2)',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 2,
-    marginLeft: 5
+    marginLeft: APP_CONFIG.UI.SPACING.TINY
   }
 }

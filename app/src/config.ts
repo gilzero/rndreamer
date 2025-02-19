@@ -153,11 +153,30 @@ export const APP_CONFIG = {
     },
     // Animation timings
     ANIMATION: {
-      FAST: 100,
-      MEDIUM: 200,
-      SLOW: 300,
-      VERY_SLOW: 400,
-      DEFAULT_DELAY: 100
+      DURATION: {
+        FAST: 100,
+        MEDIUM: 200,
+        SLOW: 300,
+        VERY_SLOW: 400
+      },
+      DELAY: {
+        DEFAULT: 100,
+        LONG: 200
+      },
+      EASING: {
+        DEFAULT: 'ease',
+        IN_OUT: 'ease-in-out',
+        BOUNCE: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+      }
+    },
+    // Input styling
+    INPUT: {
+      BORDER_RADIUS: 24,
+      PADDING: {
+        VERTICAL: 5,
+        HORIZONTAL: 12
+      },
+      HEIGHT: 44
     },
     // Common component sizes
     SIZES: {

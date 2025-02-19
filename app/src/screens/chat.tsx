@@ -127,14 +127,14 @@ export function Chat() {
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
+        duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM,
         useNativeDriver: true,
         easing: Easing.out(Easing.ease)
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: APP_CONFIG.UI.ANIMATION.SLOW,
-        delay: APP_CONFIG.UI.ANIMATION.DEFAULT_DELAY,
+        duration: APP_CONFIG.UI.ANIMATION.DURATION.SLOW,
+        delay: APP_CONFIG.UI.ANIMATION.DELAY.DEFAULT,
         useNativeDriver: true,
         easing: Easing.in(Easing.ease)
       })
@@ -159,13 +159,13 @@ export function Chat() {
     Animated.sequence([
       Animated.timing(scale, {
         toValue: 0.95,
-        duration: 100,
+        duration: APP_CONFIG.UI.ANIMATION.DURATION.FAST,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
         toValue: 1,
-        duration: 100,
+        duration: APP_CONFIG.UI.ANIMATION.DURATION.FAST,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
@@ -260,7 +260,7 @@ export function Chat() {
   const animateInputLoading = (isLoading: boolean) => {
     Animated.timing(inputOpacity, {
       toValue: isLoading ? 0.5 : 1,
-      duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
+      duration: APP_CONFIG.UI.ANIMATION.DURATION.MEDIUM,
       useNativeDriver: true,
     }).start();
   };

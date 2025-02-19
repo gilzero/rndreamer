@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { THEMES } from '../config';
+import { APP_CONFIG } from '../config';
 
 interface Props {
   children: React.ReactNode;
@@ -55,27 +56,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: APP_CONFIG.UI.SPACING.XLARGE,
     backgroundColor: THEMES.light.backgroundColor,
   },
   title: {
-    fontSize: 20,
+    fontSize: APP_CONFIG.UI.TYPOGRAPHY.XLARGE,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: APP_CONFIG.UI.SPACING.MEDIUM,
     color: THEMES.light.textColor,
   },
   message: {
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: APP_CONFIG.UI.SPACING.XLARGE,
     color: THEMES.light.textColor,
   },
   button: {
     backgroundColor: THEMES.light.tintColor,
-    padding: 10,
-    borderRadius: 5,
+    padding: APP_CONFIG.UI.SPACING.MEDIUM,
+    borderRadius: APP_CONFIG.UI.BORDER_RADIUS.SMALL,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: APP_CONFIG.UI.TYPOGRAPHY.MEDIUM,
   },
 });
