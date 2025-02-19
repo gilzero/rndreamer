@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, TextInput, TouchableHighlight, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { MESSAGE_LIMITS } from '../utils/messageUtils';
+import { MESSAGE_LIMITS } from '../utils';
 
 interface ChatInputProps {
   input: string;

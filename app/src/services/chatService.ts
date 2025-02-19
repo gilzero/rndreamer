@@ -1,5 +1,5 @@
 // @fileoverview: chat service for the app
-// @filepath: app/src/services/chatService.ts
+// @filepath: app/src/services.ts
 
 /**
  * DEV NOTE: Chat Implementation Strategy
@@ -13,11 +13,11 @@
  * - More interactive feedback
  * - Smoother UI updates
  */
-import { ChatMessage, ModelProvider } from "../../types";
-import { DOMAIN } from "../../constants";
+import { ChatMessage, ModelProvider } from "../config";
+import { DOMAIN, APP_CONFIG } from "../config";
 import EventSource from 'react-native-sse';
-import { createSSEConnection } from '../utils/sseUtils';
-import { ChatError } from '../utils/errorUtils';
+import { createSSEConnection } from '../utils';
+import { ChatError } from '../utils';
 
 export interface ChatOptions {
   provider: ModelProvider;
@@ -33,7 +33,7 @@ export interface ChatCallbacks {
   onConnectionStatus?: (status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting') => void;
 }
 
-const STREAM_TIMEOUT = 60000; // 1 minute timeout for entire stream
+const { STREAM_TIMEOUT } = APP_CONFIG.SSE;
 
 class ChatService {
   private getApiUrl() {

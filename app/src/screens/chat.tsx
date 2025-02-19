@@ -41,16 +41,17 @@ import { useContext, useState, useRef } from 'react'
 import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import { v4 as uuid } from 'uuid'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { ChatMessage, ChatState } from '../../types'
+import { ChatMessage, ChatState } from '../config'
 import * as Clipboard from 'expo-clipboard'
 import { useActionSheet } from '@expo/react-native-action-sheet'
-import { chatService } from '../services/chatService'
-import { ChatError } from '../utils/errorUtils'
+import { chatService } from '../services'
+import { ChatError } from '../utils'
+import { APP_CONFIG } from '../config'
 import { 
   validateMessage, 
   MESSAGE_LIMITS, 
   getFirstNCharsOrLess 
-} from '../utils/messageUtils'
+} from '../utils'
 import Toast from 'react-native-toast-message'
 import { ChatMessage as ChatMessageComponent } from '../components/ChatMessage'
 import { ChatInput } from '../components/ChatInput'
@@ -126,14 +127,14 @@ export function Chat() {
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 200,
+        duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
         useNativeDriver: true,
         easing: Easing.out(Easing.ease)
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 300,
-        delay: 100,
+        duration: APP_CONFIG.UI.ANIMATION.SLOW,
+        delay: APP_CONFIG.UI.ANIMATION.DEFAULT_DELAY,
         useNativeDriver: true,
         easing: Easing.in(Easing.ease)
       })
@@ -259,7 +260,7 @@ export function Chat() {
   const animateInputLoading = (isLoading: boolean) => {
     Animated.timing(inputOpacity, {
       toValue: isLoading ? 0.5 : 1,
-      duration: 200,
+      duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
       useNativeDriver: true,
     }).start();
   };

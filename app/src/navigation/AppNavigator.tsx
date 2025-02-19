@@ -1,8 +1,8 @@
 /**
- * @fileoverview Main application component that sets up the navigation structure and global UI elements.
+ * @fileoverview Main navigation component that sets up the navigation structure and global UI elements.
  * Implements bottom tab navigation, theme-aware toast notifications, and safe area handling.
  *
- * @filepath app/src/main.tsx
+ * @filepath app/src/navigation/AppNavigator.tsx
  *
  * @see {@link ../App.tsx} for theme and app-wide state management
  * @see {@link ../screens/chat.tsx} for the main chat interface
@@ -12,17 +12,17 @@
 import { useContext } from 'react';
 import { StyleSheet, View} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Chat, Settings, Agent } from './screens'
-import { Header } from './components'
+import { Chat, Settings, Agent } from '../screens'
+import { Header } from '../components'
 import FeatherIcon from '@expo/vector-icons/Feather'
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
-import { ThemeContext } from './contexts/AppContexts'
+import { ThemeContext } from '../contexts/AppContexts'
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import { ParamListBase } from '@react-navigation/native';
-import { Theme } from '../types'
+import { Theme } from '../config'
 
 type RootTabParamList = ParamListBase & {
   'AI Chat': undefined;
@@ -34,36 +34,9 @@ const Tab = createBottomTabNavigator<RootTabParamList>()
 
 /**
  * Generates theme-aware toast configurations for the application.
- * Provides styled toast components that adapt to the current theme.
- * 
- * Toast Types:
- * - success: Used for successful operations (e.g., message sent, settings saved)
- * - error: Used for error notifications (e.g., validation errors, network issues)
- * - info: Used for neutral informational messages
- * 
- * Error Display:
- * - text1: Short error title or type (e.g., "Connection Error")
- * - text2: Detailed error message
- * 
- * @param {object} theme - Current theme object containing colors and fonts
- * @returns {object} Toast configuration object with styled toast components
- * 
- * @see {@link ../services/chatService.ts} for error generation
- * @see {@link ../utils.ts} for validation error types
  */
 function ToastConfig({ theme }: { theme: Theme }) {
   return {
-    /**
-     * Success toast component with theme-aware styling.
-     * Used to display successful operation notifications.
-     * 
-     * Usage:
-     * Toast.show({
-     *   type: 'success',
-     *   text1: 'Success Title',
-     *   text2: 'Success message details'
-     * })
-     */
     success: (props: any) => (
       <BaseToast
         {...props}
@@ -94,23 +67,6 @@ function ToastConfig({ theme }: { theme: Theme }) {
         }}
       />
     ),
-    /**
-     * Error toast component with theme-aware styling and error-specific accents.
-     * Used to display validation errors, network issues, and other error states.
-     * 
-     * Common Error Types:
-     * - Validation errors (from MessageValidationError)
-     * - Network connectivity issues
-     * - API response errors
-     * - Stream connection errors
-     * 
-     * Usage:
-     * Toast.show({
-     *   type: 'error',
-     *   text1: 'Error Type',
-     *   text2: 'Detailed error message'
-     * })
-     */
     error: (props: any) => (
       <ErrorToast
         {...props}
@@ -141,22 +97,11 @@ function ToastConfig({ theme }: { theme: Theme }) {
         }}
       />
     ),
-    /**
-     * Info toast component with theme-aware styling.
-     * Used to display neutral informational messages.
-     * 
-     * Usage:
-     * Toast.show({
-     *   type: 'info',
-     *   text1: 'Info Title',
-     *   text2: 'Informational message details'
-     * })
-     */
     info: (props: any) => (
       <BaseToast
         {...props}
         style={{
-          borderLeftColor: '#3498db', // Info blue color
+          borderLeftColor: '#3498db',
           backgroundColor: theme.backgroundColor,
           borderColor: theme.borderColor,
           borderWidth: 1,
@@ -187,9 +132,8 @@ function ToastConfig({ theme }: { theme: Theme }) {
 
 /**
  * Main navigation component that implements the bottom tab navigation.
- * Handles screen navigation and applies theme-aware styling to the tab bar.
  */
-function MainComponent() {
+function AppNavigatorComponent() {
   const insets = useSafeAreaInsets()
   const { theme } = useContext(ThemeContext)
   const styles = getStyles({ theme, insets })
@@ -198,17 +142,15 @@ function MainComponent() {
     <View style={styles.container}>
       <Tab.Navigator
         screenOptions={getTabScreenOptions(theme)}
+        initialRouteName="AI Chat"
       >
         <Tab.Screen
           name="AI Chat"
           component={Chat}
           options={{
+            header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
-              <FeatherIcon
-                name="message-circle"
-                color={color}
-                size={size}
-              />
+              <FeatherIcon name="message-circle" size={size} color={color} />
             ),
           }}
         />
@@ -216,12 +158,9 @@ function MainComponent() {
           name="AI Agent"
           component={Agent}
           options={{
+            header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
-              <FeatherIcon
-                name="cpu"
-                color={color}
-                size={size}
-              />
+              <FeatherIcon name="cpu" size={size} color={color} />
             ),
           }}
         />
@@ -229,75 +168,65 @@ function MainComponent() {
           name="Settings"
           component={Settings}
           options={{
+            header: () => <Header />,
             tabBarIcon: ({ color, size }) => (
-              <FeatherIcon
-                name="sliders"
-                color={color}
-                size={size}
-              />
+              <FeatherIcon name="settings" size={size} color={color} />
             ),
           }}
         />
       </Tab.Navigator>
+      <Toast config={ToastConfig({ theme })} position="bottom" />
     </View>
-  );
+  )
 }
 
 /**
  * Root component of the application.
  * Sets up the SafeAreaProvider and global toast notifications.
  */
-export function Main() {
-  const { theme } = useContext(ThemeContext)
+export function AppNavigator() {
   return (
     <SafeAreaProvider>
-      <MainComponent />
-      <Toast config={ToastConfig({ theme })} />
+      <AppNavigatorComponent />
     </SafeAreaProvider>
   )
 }
 
 /**
  * Generates styles for the container component based on theme and safe area insets.
- * 
- * @param {object} theme - Current theme object containing colors and styling properties
- * @param {object} insets - Safe area insets for proper layout padding
- * @returns {object} StyleSheet object with container styles
  */
-const getStyles = ({ theme, insets } : { theme: any, insets: any}) => StyleSheet.create({
-  container: {
-    backgroundColor: theme.backgroundColor,
-    flex: 1,
-    paddingTop: insets.top,
-    paddingBottom: insets.bottom,
-    paddingLeft: insets.left,
-    paddingRight: insets.right,
-  },
-})
+function getStyles({ theme, insets } : { theme: Theme, insets: any}) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.backgroundColor,
+      paddingTop: insets.top,
+    },
+  })
+}
 
 /**
  * Extracts tab screen options to reduce duplication
- * 
- * @param {Theme} theme - Current theme object containing colors and styling properties
- * @returns {object} Tab screen options object
  */
-const getTabScreenOptions = (theme: Theme) => {
-  const insets = useSafeAreaInsets()
+function getTabScreenOptions(theme: Theme) {
   return {
+    tabBarStyle: {
+      backgroundColor: theme.backgroundColor,
+      borderTopColor: theme.borderColor,
+      borderTopWidth: 1,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: -4,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 5,
+    },
     tabBarActiveTintColor: theme.tabBarActiveTintColor,
     tabBarInactiveTintColor: theme.tabBarInactiveTintColor,
-    tabBarStyle: {
-      borderTopWidth: 0,
-      backgroundColor: theme.backgroundColor,
-      height: 85,
-      paddingTop: 12,
-      paddingBottom: insets.bottom + 8
-    },
     tabBarLabelStyle: {
-      paddingBottom: 6,
-      fontSize: 12,
-      fontFamily: theme.mediumFont
+      fontFamily: theme.mediumFont,
     },
-    header: () => <Header />
   }
 }

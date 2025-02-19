@@ -3,7 +3,8 @@ import React, { memo } from 'react';
 import { View, Text, TouchableHighlight, StyleSheet, Animated } from 'react-native';
 import Markdown from '@ronradtke/react-native-markdown-display';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ChatMessage as ChatMessageType } from '../../types';
+import { ChatMessage as ChatMessageType } from '../config';
+import { APP_CONFIG } from '../config';
 
 interface ChatMessageProps {
   item: ChatMessageType;
@@ -49,8 +50,8 @@ export const ChatMessage = memo(({ item, theme, onPressOptions }: ChatMessagePro
 
 const getStyles = (theme: any) => StyleSheet.create({
   promptResponse: {
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: APP_CONFIG.UI.SPACING.LARGE,
+    marginBottom: APP_CONFIG.UI.SPACING.SMALL,
   },
   textStyleContainer: {
     borderWidth: 1,
@@ -111,7 +112,7 @@ const getStyles = (theme: any) => StyleSheet.create({
     opacity: 0.8
   },
   optionsIconWrapper: {
-    padding: 12,
+    padding: APP_CONFIG.UI.SPACING.MEDIUM,
     paddingTop: 10,
     alignItems: 'flex-end',
     opacity: 0.8

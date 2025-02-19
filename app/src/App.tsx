@@ -14,15 +14,21 @@
  */
 
 import 'react-native-gesture-handler'
-import './src/polyfills'
+import { ReadableStream } from 'web-streams-polyfill'
+
+// Add ReadableStream polyfill for streaming functionality
+if (typeof global.ReadableStream === 'undefined') {
+  (global as any).ReadableStream = ReadableStream;
+}
 import { useState, useEffect, useRef, SetStateAction } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
-import { Main } from './src/main'
+import { AppNavigator } from './navigation/AppNavigator'
 import { useFonts } from 'expo-font'
-import { Model } from './types'
-import { MODELS, THEMES, FONTS, STORAGE_KEYS, getBottomSheetStyles } from './constants'
+import { Model, MODELS, THEMES, FONTS, getBottomSheetStyles, APP_CONFIG } from './config'
+
+const { STORAGE_KEYS } = APP_CONFIG;
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { ChatModelModal } from './src/components/index'
+import { ChatModelModal } from './components/index'
 import { ActionSheetProvider } from '@expo/react-native-action-sheet'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
@@ -33,8 +39,8 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
 import { LogBox } from 'react-native'
-import { ThemeContext, AppContext } from './src/contexts/AppContexts'
-import { ErrorBoundary } from './src/components/ErrorBoundary'
+import { ThemeContext, AppContext } from './contexts/AppContexts'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -186,7 +192,7 @@ const App: React.FC = () => {
           }}>
             <ActionSheetProvider>
               <NavigationContainer>
-                <Main />
+                <AppNavigator />
               </NavigationContainer>
             </ActionSheetProvider>
             <BottomSheetModalProvider>

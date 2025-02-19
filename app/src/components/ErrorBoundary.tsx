@@ -1,7 +1,7 @@
 // filepath: app/src/components/ErrorBoundary.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { THEMES } from '../../constants';
+import { THEMES } from '../config';
 
 interface Props {
   children: React.ReactNode;

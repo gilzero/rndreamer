@@ -11,7 +11,7 @@ import { useContext } from 'react'
 import { ThemeContext, AppContext } from '../contexts/AppContexts'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
-import { THEMES } from '../../constants'
+import { THEMES } from '../config'
 
 export function Header() {
   const { theme } = useContext(ThemeContext)

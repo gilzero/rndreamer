@@ -1,7 +1,7 @@
 // filepath: app/src/components/Icons.tsx
 import Svg, { Path, G } from 'react-native-svg';
-import { IconProps } from '../../types';
-import { Theme } from '../../types';
+import { IconProps } from '../config';
+import { Theme } from '../config';
 import React from 'react';
 
 // Define a default theme value for the Icon component
@@ -29,7 +29,7 @@ const defaultTheme: Theme = {
  * Includes model-specific icons and generic app icons.
  * 
  * @see {@link ../../constants.ts} for theme types
- * @see {@link ../../types.ts} for icon props
+ * @see {@link ../../config.ts} for icon props
  */
 
 /**

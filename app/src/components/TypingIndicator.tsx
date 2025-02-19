@@ -1,6 +1,7 @@
 // filepath: app/src/components/TypingIndicator.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { APP_CONFIG } from '../config';
 
 interface TypingIndicatorProps {
   theme: any;
@@ -56,8 +57,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     maxWidth: '70%',
   },
   modelIconContainer: {
-    width: 28,
-    height: 28,
+    width: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.WIDTH,
+    height: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.HEIGHT,
     borderRadius: 14,
     backgroundColor: theme.tintColor + '20',
     justifyContent: 'center',
@@ -80,8 +81,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     borderColor: theme.borderColor + '20',
   },
   typingDot: {
-    width: 6,
-    height: 6,
+    width: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.DOT_SIZE,
+    height: APP_CONFIG.UI.SIZES.TYPING_INDICATOR.DOT_SIZE,
     borderRadius: 3,
     backgroundColor: theme.tintColor,
     marginHorizontal: 3,

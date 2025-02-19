@@ -8,10 +8,10 @@
  */
 import { useContext } from 'react'
 import { ThemeContext, AppContext } from '../contexts/AppContexts'
-import { MODELS } from '../../constants'
+import { MODELS } from '../config'
 import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native'
-import { Model } from '../../types'
-import { THEMES } from '../../constants'
+import { Model } from '../config'
+import { THEMES } from '../config'
 
 interface ChatModelModalProps {
   handlePresentModalPress: () => void;

@@ -31,12 +31,13 @@ import {
   OpenAIIcon,
   GeminiIcon
 } from '../components'
-import { IconProps } from '../../types'
-import { MODELS, THEMES } from '../../constants'
+import { IconProps } from '../config'
+import { MODELS, THEMES } from '../config'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useNavigation } from '@react-navigation/native'
+import { APP_CONFIG } from '../config'
 
 /** Array of available AI models from constants */
 const models = Object.values(MODELS)
@@ -157,12 +158,12 @@ export function Settings() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: showHiddenSettings ? 0 : 1,
-        duration: 300,
+        duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
         useNativeDriver: true,
       }),
       Animated.timing(rotateAnim, {
         toValue: showHiddenSettings ? 0 : 1,
-        duration: 300,
+        duration: APP_CONFIG.UI.ANIMATION.MEDIUM,
         useNativeDriver: true,
       })
     ]).start()
@@ -354,7 +355,7 @@ export function Settings() {
                   {renderIcon({
                     theme,
                     type: model.label,
-                    size: 18 as NumberProp,
+                    size: APP_CONFIG.UI.SIZES.ICON.SMALL as NumberProp,
                     selected: chatType.label === model.label || false
                   })}
                   <Text

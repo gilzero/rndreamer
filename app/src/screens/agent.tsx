@@ -3,7 +3,7 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { ThemeContext } from '../contexts/AppContexts'
 import { useContext } from 'react'
-import { THEMES } from '../../constants'
+import { THEMES } from '../config'
 
 export function Agent() {
   const { theme } = useContext(ThemeContext)
