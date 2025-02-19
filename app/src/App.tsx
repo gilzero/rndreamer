@@ -32,7 +32,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, Bottom
 import { useFonts } from 'expo-font';
 
 import { MainNavigator } from './navigation';
-import { Model, MODELS, THEMES, FONTS, getBottomSheetStyles, APP_CONFIG } from './config';
+import { Model, MODELS, THEMES, FONTS, getBottomSheetStyles, APP_CONFIG, DEFAULT_PROVIDER, ModelProvider } from './config';
 import { AIModelsModal } from './components/index';
 import { ThemeContext, AppContext } from './contexts';
 import { ErrorBoundary } from './components';
@@ -62,7 +62,8 @@ LogBox.ignoreLogs([
  * @returns {Object} - An object containing chatType, setChatType, currentTheme, and setCurrentTheme
  */
 const useAppConfiguration = () => {
-  const [chatType, setChatType] = useState<Model>(MODELS.gpt);
+  const defaultProvider = DEFAULT_PROVIDER as ModelProvider;
+  const [chatType, setChatType] = useState<Model>(MODELS[defaultProvider] || MODELS.gpt);
   const [currentTheme, setCurrentTheme] = useState(THEMES.light);
   
   useEffect(() => {

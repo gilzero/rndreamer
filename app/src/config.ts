@@ -138,14 +138,17 @@ export namespace OpenAI {
 /**
  * Supported AI model providers
  */
-export type ModelProvider = 'gpt' | 'claude' | 'gemini';
+// Provider values must match these literal types
+const GPT_PROVIDER = 'gpt' as const;
+const CLAUDE_PROVIDER = 'claude' as const;
+const GEMINI_PROVIDER = 'gemini' as const;
+
+export type ModelProvider = typeof GPT_PROVIDER | typeof CLAUDE_PROVIDER | typeof GEMINI_PROVIDER;
 
 /**
  * Configuration for an AI model
  */
 export interface Model {
-  /** Unique identifier for the model */
-  name: string;
   /** Provider of the model */
   label: ModelProvider;
   /** Icon component for the model */
@@ -538,22 +541,44 @@ export const DOMAIN = process.env['EXPO_PUBLIC_ENV'] === 'DEVELOPMENT' ?
  * Helper function to create model configurations
  */
 function createModel(
-  name: string, 
   label: ModelProvider, 
   displayName: string, 
   icon: React.ComponentType<any>
 ): Model {
-  return { name, label, icon, displayName }
+  return { label, icon, displayName }
 }
 
 /**
  * AI model configurations for supported providers.
  */
-export const MODELS: Record<ModelProvider, Model> = {
-  gpt: createModel('gpt-4o', 'gpt', 'GPT-4', OpenAIIcon),
-  claude: createModel('claude-3-5-sonnet-latest', 'claude', 'Claude', AnthropicIcon),
-  gemini: createModel('gemini-2.0-flash', 'gemini', 'Gemini', GeminiIcon)
-}
+// Default provider from environment variables
+export const DEFAULT_PROVIDER = (process.env['EXPO_PUBLIC_DEFAULT_PROVIDER'] || GPT_PROVIDER) as ModelProvider;
+
+// Provider names from environment variables with type safety
+export const PROVIDERS = {
+  GPT: (process.env['EXPO_PUBLIC_PROVIDER_GPT'] || GPT_PROVIDER) as typeof GPT_PROVIDER,
+  CLAUDE: (process.env['EXPO_PUBLIC_PROVIDER_CLAUDE'] || CLAUDE_PROVIDER) as typeof CLAUDE_PROVIDER,
+  GEMINI: (process.env['EXPO_PUBLIC_PROVIDER_GEMINI'] || GEMINI_PROVIDER) as typeof GEMINI_PROVIDER
+} as const;
+
+// Type-safe model configuration
+export const MODELS = {
+  [GPT_PROVIDER]: createModel(
+    GPT_PROVIDER,
+    'GPT-4',
+    OpenAIIcon
+  ),
+  [CLAUDE_PROVIDER]: createModel(
+    CLAUDE_PROVIDER,
+    'Claude',
+    AnthropicIcon
+  ),
+  [GEMINI_PROVIDER]: createModel(
+    GEMINI_PROVIDER,
+    'Gemini',
+    GeminiIcon
+  )
+} as Record<ModelProvider, Model>;
 
 // ============= Theme Configuration =============
 /**

@@ -1,6 +1,6 @@
 /**
  * @fileoverview Main chat screen component that handles real-time messaging with AI models
- * @filepath app/src/screens/chat.tsx
+ * @filepath app/src/screens/ChatScreen.tsx
  * 
  * Supports streaming responses, message history, and UI interactions like copying and clearing chat
  *

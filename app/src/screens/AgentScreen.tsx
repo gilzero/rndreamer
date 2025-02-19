@@ -1,4 +1,4 @@
-// filepath: app/src/screens/agent.tsx
+// filepath: app/src/screens/AgentScreen.tsx
 import React, { useContext } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { ThemeContext } from '../contexts'

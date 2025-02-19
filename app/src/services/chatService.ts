@@ -19,7 +19,6 @@ import { createSSEConnection, ChatError } from '../utils';
 
 export interface ChatOptions {
   provider: ModelProvider;
-  model: string;
   temperature?: number;
   streaming?: boolean;
 }
@@ -44,9 +43,9 @@ class ChatService {
     callbacks: ChatCallbacks
   ) {
     const { onToken, onError, onComplete } = callbacks;
-    const { provider, model } = options;
+    const { provider } = options;
     const url = `${this.getApiUrl()}/chat/${provider}`;
-    const body = JSON.stringify({ messages, model });
+    const body = JSON.stringify({ messages });
 
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
@@ -105,7 +104,7 @@ class ChatService {
   // Non-streaming method - appears to be mainly used for health checks
   async chat(messages: ChatMessage[], options: ChatOptions): Promise<string> {
     try {
-      const { provider, model } = options;
+      const { provider } = options;
       const response = await fetch(`${this.getApiUrl()}/chat/${provider}`, {
         // Regular REST API call
         method: 'POST',
@@ -113,8 +112,7 @@ class ChatService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages,
-          model
+          messages
         })
       });
 

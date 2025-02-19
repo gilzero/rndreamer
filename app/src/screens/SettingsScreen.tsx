@@ -2,7 +2,7 @@
  * @fileoverview Settings screen component that allows users to select and configure AI chat models.
  * Provides a UI for switching between different AI providers (GPT, Claude, Gemini) and manages model selection state.
  * 
- * @filepath app/src/screens/settings.tsx
+ * @filepath app/src/screens/SettingsScreen.tsx
  * 
  * This file contains the Settings component that allows users to:
  * - Select and switch between different AI chat models
