@@ -1,4 +1,4 @@
-// filepath: app/src/components/ChatModelModal.tsx
+// filepath: app/src/components/AIModelsModal.tsx
 /**
  * Modal component for selecting AI chat models.
  * Provides a bottom sheet interface for switching between different AI providers.
@@ -14,11 +14,11 @@ import { Model } from '../config'
 import { THEMES } from '../config'
 import { APP_CONFIG } from '../config'
 
-interface ChatModelModalProps {
+interface AIModelsModalProps {
   handlePresentModalPress: () => void;
 }
 
-export function ChatModelModal({ handlePresentModalPress }: ChatModelModalProps) {
+export function AIModelsModal({ handlePresentModalPress }: AIModelsModalProps) {
   const { theme } = useContext(ThemeContext)
   const { setChatType, chatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme)

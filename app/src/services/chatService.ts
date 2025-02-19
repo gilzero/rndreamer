@@ -13,9 +13,8 @@
  * - More interactive feedback
  * - Smoother UI updates
  */
-import { ChatMessage, ModelProvider } from "../config";
-import { DOMAIN, APP_CONFIG } from "../config";
 import EventSource from 'react-native-sse';
+import { ChatMessage, ModelProvider, DOMAIN, APP_CONFIG } from "../config";
 import { createSSEConnection } from '../utils';
 import { ChatError } from '../utils';
 

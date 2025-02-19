@@ -10,7 +10,8 @@
  * - Change the current theme of the application
  */
 
-import {
+import React, { useContext, useState, useRef, useCallback } from 'react'
+import { 
   View,
   Text,
   StyleSheet,
@@ -23,20 +24,13 @@ import {
   TouchableOpacity
 } from 'react-native'
 import { NumberProp } from 'react-native-svg'
-import React, { useContext, useState, useRef, useCallback } from 'react'
-import { ThemeContext, AppContext } from '../contexts/AppContexts'
-import {
-  AnthropicIcon,
-  OpenAIIcon,
-  GeminiIcon
-} from '../components'
-import { IconProps } from '../config'
-import { MODELS, THEMES, SETTINGS_CONFIG } from '../config'
+import { useNavigation } from '@react-navigation/native'
 import Slider from '@react-native-community/slider'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useNavigation } from '@react-navigation/native'
-import { APP_CONFIG } from '../config'
+import { ThemeContext, AppContext } from '../contexts/AppContexts'
+import { AnthropicIcon, OpenAIIcon, GeminiIcon } from '../components'
+import { IconProps, MODELS, THEMES, SETTINGS_CONFIG, APP_CONFIG } from '../config'
 
 /** Array of available AI models from constants */
 const models = Object.values(MODELS)

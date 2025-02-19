@@ -6,8 +6,12 @@
  * @see {@link ../../constants.ts} for theme and model definitions
  */
 import { createContext } from 'react'
-import { IThemeContext, IAppContext } from '../config'
-import { THEMES, MODELS } from '../config'
+import { 
+  ThemeContext as IThemeContext, 
+  AppContext as IAppContext,
+  THEMES, 
+  MODELS 
+} from '../config'
 
 export const ThemeContext = createContext<IThemeContext>({
   theme: THEMES.light,

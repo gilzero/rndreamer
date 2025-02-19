@@ -28,7 +28,7 @@ import { Model, MODELS, THEMES, FONTS, getBottomSheetStyles, APP_CONFIG } from '
 
 const { STORAGE_KEYS } = APP_CONFIG;
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { ChatModelModal } from './components/index'
+import { AIModelsModal } from './components/index'
 import { ActionSheetProvider } from '@expo/react-native-action-sheet'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
@@ -208,7 +208,7 @@ const App: React.FC = () => {
                 onDismiss={() => setModalVisible(false)}
               >
                 <BottomSheetView>
-                  <ChatModelModal
+                  <AIModelsModal
                     handlePresentModalPress={handlePresentModalPress}
                   />
                 </BottomSheetView>

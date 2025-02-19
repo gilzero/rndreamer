@@ -52,9 +52,7 @@ import {
   getFirstNCharsOrLess 
 } from '../utils'
 import Toast from 'react-native-toast-message'
-import { ChatMessage as ChatMessageComponent } from '../components/ChatMessage'
-import { ChatInput } from '../components/ChatInput'
-import { TypingIndicator } from '../components/TypingIndicator'
+import { ChatMessage as ChatMessageComponent, ChatInput, TypingIndicator } from '../components/ChatUI'
 
 /**
  * Main Chat component that provides the chat interface and handles messaging logic.
