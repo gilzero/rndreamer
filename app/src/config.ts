@@ -1,14 +1,33 @@
 /**
  * @fileoverview Core configuration and type definitions for the chat application.
- * @filepath app/src/config.ts
+ * @module config
  * 
- * Contains:
- * - Type definitions for messages, models, contexts, and component props
- * - Theme definitions and configuration
- * - Model configurations
- * - Font assets
- * - Storage keys
- * - UI style generators
+ * This module serves as the central configuration hub for the chat application.
+ * It provides strongly-typed configuration options, theme definitions, and UI constants
+ * that ensure consistency across the application.
+ * 
+ * Key Features:
+ * - Comprehensive type definitions for all configuration aspects
+ * - Environment-aware API configurations
+ * - Strongly-typed theme system with multiple themes
+ * - Centralized UI constants for spacing, typography, and animations
+ * - Network and cache configuration
+ * - Model provider definitions and configurations
+ * 
+ * @example
+ * import { APP_CONFIG, THEMES, MODELS } from './config';
+ * 
+ * // Using UI constants
+ * const styles = {
+ *   margin: APP_CONFIG.UI.SPACING.MEDIUM,
+ *   fontSize: APP_CONFIG.UI.TYPOGRAPHY.BODY
+ * };
+ * 
+ * // Using themes
+ * const theme = THEMES.light;
+ * 
+ * // Using model configurations
+ * const model = MODELS.gpt;
  */
 
 import { SetStateAction, Dispatch } from 'react'
@@ -16,194 +35,319 @@ import { NumberProp } from 'react-native-svg'
 import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './components/Icons'
 
 // ============= Configuration Types =============
-// Network Configuration Types
-export type NetworkTimeouts = typeof APP_CONFIG.NETWORK.TIMEOUTS;
-export type NetworkRetry = typeof APP_CONFIG.NETWORK.RETRY;
-export type NetworkRateLimits = typeof APP_CONFIG.NETWORK.RATE_LIMITS;
 
-// Validation Configuration Types
-export type ValidationMessages = typeof APP_CONFIG.VALIDATION.MESSAGES;
-export type ValidationInputs = typeof APP_CONFIG.VALIDATION.INPUTS;
+/**
+ * Network-related configuration types
+ * @namespace NetworkConfig
+ */
+export namespace NetworkConfig {
+  export type Timeouts = typeof APP_CONFIG.NETWORK.TIMEOUTS;
+  export type Retry = typeof APP_CONFIG.NETWORK.RETRY;
+  export type RateLimits = typeof APP_CONFIG.NETWORK.RATE_LIMITS;
+}
 
-// Cache Configuration Types
+/**
+ * Validation-related configuration types
+ * @namespace ValidationConfig
+ */
+export namespace ValidationConfig {
+  export type Messages = typeof APP_CONFIG.VALIDATION.MESSAGES;
+  export type Inputs = typeof APP_CONFIG.VALIDATION.INPUTS;
+  export type Errors = typeof APP_CONFIG.ERRORS.VALIDATION;
+}
+
+/**
+ * Error-related configuration types
+ * @namespace ErrorConfig
+ */
+export namespace ErrorConfig {
+  export type Validation = typeof APP_CONFIG.ERRORS.VALIDATION;
+  export type Connection = typeof APP_CONFIG.ERRORS.CONNECTION;
+  export type Cache = typeof APP_CONFIG.ERRORS.CACHE;
+}
+
+/**
+ * Cache-related configuration types
+ * @namespace CacheConfig
+ */
 export type CacheConfig = typeof APP_CONFIG.CACHE;
 
-// Error Configuration Types
-export type ValidationErrors = typeof APP_CONFIG.ERRORS.VALIDATION;
-export type ConnectionErrors = typeof APP_CONFIG.ERRORS.CONNECTION;
-export type CacheErrors = typeof APP_CONFIG.ERRORS.CACHE;
-
-// Complete Configuration Type
+/**
+ * Complete application configuration type
+ */
 export type AppConfig = typeof APP_CONFIG;
 
-// ============= Core Message Types =============
-export type MessageRole = 'user' | 'assistant' | 'system'
+// ============= Message Types =============
 
+/**
+ * Represents the role of a message participant in the chat
+ */
+export type MessageRole = 'user' | 'assistant' | 'system';
+
+/**
+ * Base message interface for chat messages
+ */
 export interface ChatMessage {
-  role: MessageRole
-  content: string
-  timestamp?: number
-  model?: string
+  /** The role of the message sender */
+  role: MessageRole;
+  /** The content of the message */
+  content: string;
+  /** Optional timestamp of when the message was sent */
+  timestamp?: number;
+  /** Optional model identifier that generated the message */
+  model?: string;
 }
 
+/**
+ * Represents the state of a chat conversation
+ */
 export interface ChatState {
-  messages: ChatMessage[]
-  index: string
+  /** Array of messages in the conversation */
+  messages: ChatMessage[];
+  /** Unique identifier for the conversation */
+  index: string;
 }
 
-export interface IOpenAIUserHistory {
-  user: string
-  assistant: string
-  fileIds?: any[]
+/**
+ * OpenAI specific message types
+ * @namespace OpenAI
+ */
+export namespace OpenAI {
+  export interface UserHistory {
+    user: string;
+    assistant: string;
+    fileIds?: string[];
+  }
+
+  export interface StateWithIndex {
+    messages: Array<{
+      user: string;
+      assistant: string;
+    }>;
+    index: string;
+  }
+
+  export interface Message {
+    role: MessageRole;
+    content: string;
+  }
 }
 
-export interface IOpenAIStateWithIndex {
-  messages: Array<{
-    user: string
-    assistant: string
-  }>
-  index: string
-}
+// ============= Model Types =============
 
-export interface IOpenAIMessages {
-  role: MessageRole
-  content: string
-}
+/**
+ * Supported AI model providers
+ */
+export type ModelProvider = 'gpt' | 'claude' | 'gemini';
 
-// ============= Model & Provider Types =============
-export type ModelProvider = 'gpt' | 'claude' | 'gemini'
-
+/**
+ * Configuration for an AI model
+ */
 export interface Model {
-  name: string
-  label: ModelProvider
-  icon: React.ComponentType<any> | null
-  displayName: string
+  /** Unique identifier for the model */
+  name: string;
+  /** Provider of the model */
+  label: ModelProvider;
+  /** Icon component for the model */
+  icon: React.ComponentType<any> | null;
+  /** Display name for the UI */
+  displayName: string;
+}
+
+// ============= Theme Types =============
+
+/**
+ * Base theme interface defining all required theme properties
+ */
+export interface Theme {
+  /** Theme name for identification */
+  name: string;
+  /** Primary background color */
+  backgroundColor: string;
+  /** Primary text color */
+  textColor: string;
+  /** Accent color for interactive elements */
+  tintColor: string;
+  /** Text color for elements using tint color background */
+  tintTextColor: string;
+  /** Color for borders and dividers */
+  borderColor: string;
+  /** Active tab color */
+  tabBarActiveTintColor: string;
+  /** Inactive tab color */
+  tabBarInactiveTintColor: string;
+  /** Placeholder text color for inputs */
+  placeholderTextColor: string;
+  /** Secondary background color */
+  secondaryBackgroundColor: string;
+  /** Secondary text color */
+  secondaryTextColor: string;
+  /** Font family for regular text */
+  regularFont: string;
+  /** Font family for medium weight text */
+  mediumFont: string;
+  /** Font family for semi-bold text */
+  semiBoldFont: string;
+  /** Font family for bold text */
+  boldFont: string;
+  /** Font family for light text */
+  lightFont: string;
 }
 
 // ============= Context Types =============
-export interface IThemeContext {
-  theme: typeof THEMES.light
-  themeName: string
-  setTheme: Dispatch<SetStateAction<typeof THEMES.light>>
+
+/**
+ * Theme context interface for React context
+ */
+export interface ThemeContext {
+  /** Current theme */
+  theme: typeof THEMES.light;
+  /** Current theme name */
+  themeName: string;
+  /** Function to update theme */
+  setTheme: Dispatch<SetStateAction<typeof THEMES.light>>;
 }
 
-export interface IAppContext {
-  chatType: Model
-  setChatType: Dispatch<SetStateAction<Model>>
-  handlePresentModalPress: () => void
-  closeModal: () => void
-  clearChat: () => void
-  clearChatRef: React.MutableRefObject<(() => void) | undefined>
+/**
+ * Application context interface for React context
+ */
+export interface AppContext {
+  /** Current chat model */
+  chatType: Model;
+  /** Function to update chat model */
+  setChatType: Dispatch<SetStateAction<Model>>;
+  /** Handler for presenting modal */
+  handlePresentModalPress: () => void;
+  /** Handler for closing modal */
+  closeModal: () => void;
+  /** Handler for clearing chat */
+  clearChat: () => void;
+  /** Reference to clear chat function */
+  clearChatRef: React.MutableRefObject<(() => void) | undefined>;
 }
 
-// ============= Icon & Visual Types =============
+// ============= Component Types =============
+
+/**
+ * Props for icon components
+ */
 export interface IconProps {
+  /** Optional icon type */
   type?: string;
+  /** Current theme */
   theme: Theme;
+  /** Icon size */
   size?: NumberProp;
+  /** Selected state */
   selected?: boolean;
+  /** Additional props */
   [key: string]: any;
-}
-
-export interface Theme {
-  name: string;
-  backgroundColor: string;
-  textColor: string;
-  tintColor: string;
-  tintTextColor: string;
-  borderColor: string;
-  tabBarActiveTintColor: string;
-  tabBarInactiveTintColor: string;
-  placeholderTextColor: string;
-  secondaryBackgroundColor: string;
-  secondaryTextColor: string;
-  regularFont: string;
-  mediumFont: string;
-  semiBoldFont: string;
-  boldFont: string;
-  lightFont: string;
 }
 
 // ============= Configuration =============
 
 /**
  * Application-wide configuration constants
+ * @const
  */
 export const APP_CONFIG = {
   /**
    * Network and API Configuration
-   * 
-   * Settings for API endpoints, timeouts, retries, and other network-related configurations
+   * @namespace NETWORK
    */
   NETWORK: {
-    // Timeouts in milliseconds
+    /** Timeout configurations in milliseconds */
     TIMEOUTS: {
-      API_REQUEST: 30000,    // 30 seconds for general API requests
-      STREAM: 60000,         // 1 minute for streaming responses
-      CONNECTION: 10000,     // 10 seconds for initial connection
-      SOCKET: 5000,          // 5 seconds for websocket operations
+      /** 30 seconds for general API requests */
+      API_REQUEST: 30_000,
+      /** 1 minute for streaming responses */
+      STREAM: 60_000,
+      /** 10 seconds for initial connection */
+      CONNECTION: 10_000,
+      /** 5 seconds for websocket operations */
+      SOCKET: 5_000,
     },
-    // Retry configuration
+    /** Retry configuration for failed requests */
     RETRY: {
-      MAX_ATTEMPTS: 3,      // Maximum number of retry attempts
-      BACKOFF_MS: 1000,     // Base delay between retries in ms
-      MAX_BACKOFF_MS: 5000, // Maximum delay between retries
+      /** Maximum number of retry attempts */
+      MAX_ATTEMPTS: 3,
+      /** Base delay between retries in ms */
+      BACKOFF_MS: 1_000,
+      /** Maximum delay between retries */
+      MAX_BACKOFF_MS: 5_000,
     },
-    // Rate limiting
+    /** Rate limiting configuration */
     RATE_LIMITS: {
+      /** Maximum requests per minute */
       REQUESTS_PER_MINUTE: 60,
+      /** Maximum concurrent streams */
       CONCURRENT_STREAMS: 3,
     },
   },
 
   /**
    * Data Validation Configuration
-   * 
-   * Constants for input validation, data limits, and sanitization
+   * @namespace VALIDATION
    */
   VALIDATION: {
+    /** Message validation rules */
     MESSAGES: {
-      MAX_LENGTH: 4000,     // Maximum characters per message
-      MIN_LENGTH: 1,        // Minimum characters per message
-      MAX_HISTORY: 100,     // Maximum messages in conversation history
+      /** Maximum characters per message */
+      MAX_LENGTH: 4_000,
+      /** Minimum characters per message */
+      MIN_LENGTH: 1,
+      /** Maximum messages in conversation history */
+      MAX_HISTORY: 100,
     },
+    /** Input validation rules */
     INPUTS: {
-      MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB in bytes
-      ALLOWED_FILE_TYPES: ['txt', 'pdf', 'doc', 'docx'],
+      /** Maximum file size (10MB in bytes) */
+      MAX_FILE_SIZE: 10 * 1024 * 1024,
+      /** Allowed file extensions */
+      ALLOWED_FILE_TYPES: ['txt', 'pdf', 'doc', 'docx'] as const,
     },
   },
 
   /**
    * Cache Configuration
-   * 
-   * Settings for client-side caching behavior
+   * @namespace CACHE
    */
   CACHE: {
-    MESSAGE_TTL: 24 * 60 * 60 * 1000,  // 24 hours in milliseconds
-    MAX_CACHE_SIZE: 50 * 1024 * 1024,   // 50MB in bytes
-    INVALIDATION_INTERVAL: 60 * 60 * 1000, // 1 hour in milliseconds
+    /** Message time-to-live (24 hours in milliseconds) */
+    MESSAGE_TTL: 24 * 60 * 60 * 1_000,
+    /** Maximum cache size (50MB in bytes) */
+    MAX_CACHE_SIZE: 50 * 1024 * 1024,
+    /** Cache invalidation interval (1 hour in milliseconds) */
+    INVALIDATION_INTERVAL: 60 * 60 * 1_000,
   },
 
   /**
    * Error Messages
-   * 
-   * Centralized error messages for consistent error handling
+   * @namespace ERRORS
    */
   ERRORS: {
+    /** Validation error messages */
     VALIDATION: {
       EMPTY_MESSAGE: 'Message content cannot be empty',
-      MESSAGE_TOO_LONG: (limit: number) => `Message exceeds maximum length of ${limit} characters`,
-      TOO_MANY_MESSAGES: (limit: number) => `Conversation exceeds maximum of ${limit} messages`,
-      INVALID_FILE_TYPE: (types: string[]) => `File type not supported. Allowed types: ${types.join(', ')}`,
-      FILE_TOO_LARGE: (maxSize: number) => `File size exceeds maximum of ${maxSize / (1024 * 1024)}MB`,
+      MESSAGE_TOO_LONG: (limit: number) => 
+        `Message exceeds maximum length of ${limit} characters`,
+      TOO_MANY_MESSAGES: (limit: number) => 
+        `Conversation exceeds maximum of ${limit} messages`,
+      INVALID_FILE_TYPE: (types: readonly string[]) => 
+        `File type not supported. Allowed types: ${types.join(', ')}`,
+      FILE_TOO_LARGE: (maxSize: number) => 
+        `File size exceeds maximum of ${maxSize / (1024 * 1024)}MB`,
     },
+    /** Connection error messages */
     CONNECTION: {
       TIMEOUT: 'Connection timeout',
       FAILED: 'Failed to establish connection',
-      INVALID_MODEL: (model: string, supported: string[]) => `Unsupported model type: ${model}. Must be one of: ${supported.join(', ')}`,
+      INVALID_MODEL: (model: string, supported: string[]) => 
+        `Unsupported model type: ${model}. Must be one of: ${supported.join(', ')}`,
       RATE_LIMITED: 'Too many requests. Please try again later.',
       CONCURRENT_LIMIT: 'Maximum number of concurrent streams reached',
     },
+    /** Cache error messages */
     CACHE: {
       STORAGE_FULL: 'Local storage is full. Please clear some space.',
       INVALID_CACHE: 'Cache data is corrupted or invalid',
@@ -412,31 +556,55 @@ export const MODELS: Record<ModelProvider, Model> = {
 }
 
 // ============= Theme Configuration =============
-const colors = {
+/**
+ * Color palette definitions
+ * @const
+ */
+const COLORS = {
+  /** Base colors */
   white: '#fff',
   black: '#000',
+  /** Transparent colors */
   gray: 'rgba(0, 0, 0, .5)',
   lightWhite: 'rgba(255, 255, 255, .5)',
-  blueTintColor: '#0281ff',
-  lightPink: '#F7B5CD'
-}
+  /** Brand colors */
+  blueTint: '#0281ff',
+  lightPink: '#F7B5CD',
+  /** Theme-specific colors */
+  vercelGray: '#171717',
+  miamiDark: '#231F20',
+} as const;
 
 /**
  * Font configuration and assets
+ * @const
  */
 export const FONTS = {
+  /** Regular weight */
   'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
+  /** Light weight */
   'Geist-Light': require('./assets/fonts/Geist-Light.otf'),
+  /** Bold weight */
   'Geist-Bold': require('./assets/fonts/Geist-Bold.otf'),
+  /** Medium weight */
   'Geist-Medium': require('./assets/fonts/Geist-Medium.otf'),
+  /** Black weight */
   'Geist-Black': require('./assets/fonts/Geist-Black.otf'),
+  /** Semi-bold weight */
   'Geist-SemiBold': require('./assets/fonts/Geist-SemiBold.otf'),
+  /** Thin weight */
   'Geist-Thin': require('./assets/fonts/Geist-Thin.otf'),
+  /** Ultra-light weight */
   'Geist-UltraLight': require('./assets/fonts/Geist-UltraLight.otf'),
+  /** Ultra-black weight */
   'Geist-UltraBlack': require('./assets/fonts/Geist-UltraBlack.otf')
-}
+} as const;
 
-const fontStyles = {
+/**
+ * Font style configuration
+ * @const
+ */
+const FONT_STYLES = {
   regularFont: 'Geist-Regular',
   lightFont: 'Geist-Light',
   boldFont: 'Geist-Bold',
@@ -446,132 +614,218 @@ const fontStyles = {
   thinFont: 'Geist-Thin',
   ultraLightFont: 'Geist-UltraLight',
   ultraBlackFont: 'Geist-UltraBlack',
-}
+} as const;
 
+/**
+ * Base theme interface extending font styles
+ */
 type BaseTheme = {
+  /** Theme name for display */
   name: string;
+  /** Theme identifier */
   label: string;
+  /** Primary text color */
   textColor: string;
+  /** Secondary text color */
   secondaryTextColor: string;
+  /** Color for less prominent text */
   mutedForegroundColor: string;
+  /** Primary background color */
   backgroundColor: string;
+  /** Placeholder text color */
   placeholderTextColor: string;
+  /** Secondary background color */
   secondaryBackgroundColor: string;
+  /** Border color */
   borderColor: string;
+  /** Accent color */
   tintColor: string;
+  /** Text color on accent background */
   tintTextColor: string;
+  /** Active tab color */
   tabBarActiveTintColor: string;
+  /** Inactive tab color */
   tabBarInactiveTintColor: string;
-} & typeof fontStyles;
+} & typeof FONT_STYLES;
 
+/**
+ * Available theme variants
+ */
 type ThemeType = {
   light: BaseTheme;
   dark: BaseTheme;
   miami: BaseTheme;
   vercel: BaseTheme;
-}
+};
 
-// Define dark theme first
-const dark: BaseTheme = {
-  ...fontStyles,
+/**
+ * Dark theme base configuration
+ * @const
+ */
+const DARK_THEME: BaseTheme = {
+  ...FONT_STYLES,
   name: 'Dark',
   label: 'dark',
-  textColor: colors.white,
-  secondaryTextColor: colors.black,
-  mutedForegroundColor: colors.lightWhite,
-  backgroundColor: colors.black,
-  placeholderTextColor: colors.lightWhite,
-  secondaryBackgroundColor: colors.white,
+  textColor: COLORS.white,
+  secondaryTextColor: COLORS.black,
+  mutedForegroundColor: COLORS.lightWhite,
+  backgroundColor: COLORS.black,
+  placeholderTextColor: COLORS.lightWhite,
+  secondaryBackgroundColor: COLORS.white,
   borderColor: 'rgba(255, 255, 255, .2)',
-  tintColor: colors.blueTintColor,
-  tintTextColor: colors.white,
-  tabBarActiveTintColor: colors.blueTintColor,
-  tabBarInactiveTintColor: colors.lightWhite,
-} as const
+  tintColor: COLORS.blueTint,
+  tintTextColor: COLORS.white,
+  tabBarActiveTintColor: COLORS.blueTint,
+  tabBarInactiveTintColor: COLORS.lightWhite,
+} as const;
 
-// Then define THEMES using the type
+/**
+ * Theme configurations
+ * @const
+ */
 export const THEMES: ThemeType = {
+  /** Light theme */
   light: {
-    ...fontStyles,
+    ...FONT_STYLES,
     name: 'Light',
     label: 'light',
-    textColor: colors.black,
-    secondaryTextColor: colors.white,
-    mutedForegroundColor: colors.gray,
-    backgroundColor: colors.white,
-    placeholderTextColor: colors.gray,
-    secondaryBackgroundColor: colors.black,
+    textColor: COLORS.black,
+    secondaryTextColor: COLORS.white,
+    mutedForegroundColor: COLORS.gray,
+    backgroundColor: COLORS.white,
+    placeholderTextColor: COLORS.gray,
+    secondaryBackgroundColor: COLORS.black,
     borderColor: 'rgba(0, 0, 0, .15)',
-    tintColor: colors.blueTintColor,
-    tintTextColor: colors.white,
-    tabBarActiveTintColor: colors.black,
-    tabBarInactiveTintColor: colors.gray,
+    tintColor: COLORS.blueTint,
+    tintTextColor: COLORS.white,
+    tabBarActiveTintColor: COLORS.black,
+    tabBarInactiveTintColor: COLORS.gray,
   },
-  dark,
+  /** Dark theme */
+  dark: DARK_THEME,
+  /** Miami theme - extends dark theme */
   miami: {
-    ...fontStyles,
-    ...dark,
+    ...FONT_STYLES,
+    ...DARK_THEME,
     name: 'Miami',
     label: 'miami',
-    backgroundColor: '#231F20',
-    tintColor: colors.lightPink,
-    tintTextColor: '#231F20',
-    tabBarActiveTintColor: colors.lightPink,
+    backgroundColor: COLORS.miamiDark,
+    tintColor: COLORS.lightPink,
+    tintTextColor: COLORS.miamiDark,
+    tabBarActiveTintColor: COLORS.lightPink,
   },
+  /** Vercel theme - extends dark theme */
   vercel: {
-    ...fontStyles,
-    ...dark,
+    ...FONT_STYLES,
+    ...DARK_THEME,
     name: 'Vercel',
     label: 'vercel',
-    backgroundColor: colors.black,
-    tintColor: '#171717',
-    tintTextColor: colors.white,
-    tabBarActiveTintColor: colors.white,
-    tabBarInactiveTintColor: colors.lightWhite,
+    backgroundColor: COLORS.black,
+    tintColor: COLORS.vercelGray,
+    tintTextColor: COLORS.white,
+    tabBarActiveTintColor: COLORS.white,
+    tabBarInactiveTintColor: COLORS.lightWhite,
   }
-}
+} as const;
 
 // ============= Settings Configuration =============
+
+/**
+ * Application settings configuration
+ * @const
+ */
 export const SETTINGS_CONFIG = {
+  /** Model parameter configurations */
   MODEL_PARAMS: {
+    /** Temperature parameter for model output randomness */
     TEMPERATURE: {
+      /** Default temperature value */
       DEFAULT: 0.7,
+      /** Minimum allowed temperature */
       MIN: 0,
+      /** Maximum allowed temperature */
       MAX: 1,
+      /** Step size for temperature adjustment */
       STEP: 0.01
     },
+    /** Maximum tokens parameter for model output length */
     MAX_TOKENS: {
+      /** Default max tokens value */
       DEFAULT: 2000,
+      /** Minimum allowed tokens */
       MIN: 100,
+      /** Maximum allowed tokens */
       MAX: 8192,
+      /** Step size for token adjustment */
       STEP: 100
     }
+  },
+  /** Local storage keys */
+  STORAGE_KEYS: {
+    /** Theme storage key */
+    THEME: 'theme',
+    /** Chat type storage key */
+    CHAT_TYPE: 'chatType'
   }
-}
+} as const;
 
 // ============= UI Style Generators =============
-export function getBottomSheetStyles(theme: typeof THEMES.light) {
+
+/**
+ * Interface for bottom sheet style configuration
+ */
+interface BottomSheetStyles {
+  /** Styles for the handle indicator */
+  handleIndicator: {
+    backgroundColor: string;
+    width: number;
+  };
+  /** Styles for the handle container */
+  handle: {
+    backgroundColor: string;
+    borderTopLeftRadius: number;
+    borderTopRightRadius: number;
+  };
+  /** Styles for the background */
+  background: {
+    backgroundColor: string;
+    borderColor: string;
+    borderWidth: number;
+    shadowColor: string;
+    shadowOffset: {
+      width: number;
+      height: number;
+    };
+    shadowOpacity: number;
+    shadowRadius: number;
+    elevation: number;
+  };
+}
+
+/**
+ * Generates theme-aware styles for bottom sheet component
+ * @param theme - Current theme
+ * @returns Bottom sheet styles configuration
+ */
+export function getBottomSheetStyles(theme: typeof THEMES.light): BottomSheetStyles {
   return {
     handleIndicator: {
       backgroundColor: theme.mutedForegroundColor,
-      width: 40,
+      width: APP_CONFIG.UI.SIZES.ICON.MEDIUM,
     },
     handle: {
       backgroundColor: theme.backgroundColor,
-      borderTopLeftRadius: 15,
-      borderTopRightRadius: 15,
+      borderTopLeftRadius: APP_CONFIG.UI.BORDER_RADIUS.MEDIUM,
+      borderTopRightRadius: APP_CONFIG.UI.BORDER_RADIUS.MEDIUM,
     },
     background: {
       backgroundColor: theme.backgroundColor,
       borderColor: theme.borderColor,
       borderWidth: 1,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: -4,
-      },
+      shadowColor: COLORS.black,
+      shadowOffset: APP_CONFIG.UI.SHADOW.OFFSET.INVERTED,
       shadowOpacity: 0.1,
-      shadowRadius: 4,
+      shadowRadius: APP_CONFIG.UI.BORDER_RADIUS.SMALL,
       elevation: 5,
     },
   }

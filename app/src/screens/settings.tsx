@@ -20,7 +20,6 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Animated,
-  Switch,
   TouchableOpacity
 } from 'react-native'
 import { NumberProp } from 'react-native-svg'
@@ -94,8 +93,8 @@ export function Settings() {
   const { chatType, setChatType, clearChatRef } = useContext(AppContext)
   const styles = getStyles(theme) as SettingsStyles
   const [showHiddenSettings, setShowHiddenSettings] = useState(false)
-  const [temperature, setTemperature] = useState(SETTINGS_CONFIG.MODEL_PARAMS.TEMPERATURE.DEFAULT)
-  const [maxTokens, setMaxTokens] = useState(SETTINGS_CONFIG.MODEL_PARAMS.MAX_TOKENS.DEFAULT)
+  const [temperature, setTemperature] = useState<number>(SETTINGS_CONFIG.MODEL_PARAMS.TEMPERATURE.DEFAULT)
+  const [maxTokens, setMaxTokens] = useState<number>(SETTINGS_CONFIG.MODEL_PARAMS.MAX_TOKENS.DEFAULT)
 
   const pullDistance = useRef(new Animated.Value(0)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
